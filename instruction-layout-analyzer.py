@@ -7,6 +7,27 @@ import logging
 import subprocess
 import re
 
+class BinaryBlob:
+
+    def __init__(self):
+        pass
+
+
+class JumpAnalyser:
+
+    def __init__(self):
+        pass
+
+    def pass1(self, blob):
+        pass
+
+    def pass2(self, blob):
+        pass
+
+
+    def final(self):
+        pass
+
 
 class InstructionLayoutAnalyzer:
 
