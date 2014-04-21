@@ -30,9 +30,11 @@ class BinaryAtom:
         self.addr       = addr
         self.opcode_str = opcode
         self.opcode_len = len(opcode.replace(" ", "")) / 2
-        msg("opcode len: %d\n" % (self.opcode_len))
         self.atom_type  = b_type
         self.category   = InstructionCategory.UNKNOWN
+
+        self.src = self.dst = self.jmp_addr = self.jmp_sym = None
+        self.mnemonic = kwargs['mnemonic']
 
         if b_type == BinaryAtom.TYPE_1:
             self.src = kwargs['src']
@@ -57,7 +59,9 @@ class BinaryAtom:
             raise Exception("unknown code")
 
     def print(self):
-        msg("%s\n" % (line)) 
+        msg("%s\n" % (self.line)) 
+        msg("MNEMONIC: %s  SRC:%s  DST:%s [OPCODE: %s,  LEN:%d]\n" %
+            (self.mnemonic, self.src, self.dst,  self.opcode_str, self.opcode_len)) 
         
 
 
@@ -114,6 +118,7 @@ class InstructionLayoutAnalyzer:
         d = dict()
 
         if m1:
+            d['mnemonic'] = m1.group(1).strip()
             d['src'] = m1.group(2).strip()
             d['dst'] = m1.group(3).strip()
             d['jmp-addr'] = m1.group(4).strip()
@@ -121,26 +126,31 @@ class InstructionLayoutAnalyzer:
             dbg("1 movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>\n")
             return BinaryAtom(BinaryAtom.TYPE_1, line, addr, opcode, d)
         elif m2:
+            d['mnemonic'] = m2.group(1).strip()
             d['src'] = m2.group(2).strip()
             d['dst'] = m2.group(3).strip()
             dbg("2 mov    0x18(%rsp),%r12\n")
             return BinaryAtom(BinaryAtom.TYPE_2, line, addr, opcode, d)
         elif m3:
+            d['mnemonic'] = m3.group(1).strip()
             d['src'] = m3.group(2).strip()
             d['jmp-addr'] = m3.group(3).strip()
             d['jmp-sym']  = m3.group(4).strip()
             dbg("3 jmpq   *0x207132(%rip)        # 608218 <_GLOBAL_OFFSET_TABLE_+0x28>\n")
             return BinaryAtom(BinaryAtom.TYPE_3, line, addr, opcode, d)
         elif m4:
+            d['mnemonic'] = m4.group(1).strip()
             d['src'] = m4.group(2).strip()
             d['jmp-addr'] = m4.group(3).strip()
             dbg("4 jne    404e60 <__libc_csu_init+0x50>\n")
             return BinaryAtom(BinaryAtom.TYPE_4, line, addr, opcode, d)
         elif m5:
+            d['mnemonic'] = m5.group(1).strip()
             d['src'] = m5.group(2).strip()
             dbg("5 jmp    404b20\n")
             return BinaryAtom(BinaryAtom.TYPE_5, line, addr, opcode, d)
         elif m6:
+            d['mnemonic'] = m6.group(1).strip()
             dbg("6 ret\n")
             return BinaryAtom(BinaryAtom.TYPE_6, line, addr, opcode, d)
         else:
@@ -162,6 +172,9 @@ class InstructionLayoutAnalyzer:
         p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in p.stdout.readlines():
             atom = self.parse_line(line.decode("utf-8").strip())
+            if atom is None:
+                continue
+            atom.print()
 
         return
 
