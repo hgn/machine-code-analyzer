@@ -15,6 +15,7 @@ class InstructionCategory:
     def guess(instructon):
         return InstructionCategory.UNKNOWN
 
+
 class BinaryAtom:
 
     TYPE_1 = 1
@@ -24,7 +25,7 @@ class BinaryAtom:
     TYPE_5 = 5
     TYPE_6 = 6
 
-    def __init__(self, b_type, line, addr, opcode, match):
+    def __init__(self, b_type, line, addr, opcode, kwargs):
         self.line       = line
         self.addr       = addr
         self.opcode_str = opcode
@@ -34,15 +35,22 @@ class BinaryAtom:
         self.category   = InstructionCategory.UNKNOWN
 
         if b_type == BinaryAtom.TYPE_1:
-            self.addr = match.group(1).strip()
+            self.src = kwargs['src']
+            self.dst = kwargs['dst']
+            self.jmp_addr = kwargs['jmp-addr']
+            self.jmp_sym  = kwargs['jmp-sym']
         elif b_type == BinaryAtom.TYPE_2:
-            pass
+            self.src = kwargs['src']
+            self.dst = kwargs['dst']
         elif b_type == BinaryAtom.TYPE_3:
-            pass
+            self.src = kwargs['src']
+            self.jmp_addr = kwargs['jmp-addr']
+            self.jmp_sym  = kwargs['jmp-sym']
         elif b_type == BinaryAtom.TYPE_4:
-            pass
+            self.src = kwargs['src']
+            self.jmp_addr = kwargs['jmp-addr']
         elif b_type == BinaryAtom.TYPE_5:
-            pass
+            self.src = kwargs['src']
         elif b_type == BinaryAtom.TYPE_6:
             pass
         else:
@@ -89,13 +97,13 @@ class InstructionLayoutAnalyzer:
         # can be used to test regular expressions:
         # http://www.regexr.com/ or http://rubular.com/
         # movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>
-        m1 = re.search(r'(\w+)\s+(\S+),(\S+)\s+#\s+([\da-f]+)\s+<.+>', instr)
+        m1 = re.search(r'(\w+)\s+(\S+),(\S+)\s+#\s+([\da-f]+)\s+<(.+)>', instr)
         # mov    0x18(%rsp),%r12
         m2 = re.search(r'(\w+)\s+(\S+),(\S+)', instr)
         # jmpq   *0x207132(%rip)        # 608218 <_GLOBAL_OFFSET_TABLE_+0x28>
-        m3 = re.search(r'(\w+)\s+(\S+)\s+#\s+([\da-f]+)\s+<.+>', instr)
+        m3 = re.search(r'(\w+)\s+(\S+)\s+#\s+([\da-f]+)\s+<(.+)>', instr)
         # jne    404e60 <__libc_csu_init+0x50>
-        m4 = re.search(r'(\w+)\s+(\S+)\s+(<\S+>)', instr)
+        m4 = re.search(r'(\w+)\s+(\S+)\s+<(\S+)>', instr)
         # jmp    404b20 
         m5 = re.search(r'(\w+)\s+(\S+)', instr)
         # jmp
@@ -103,25 +111,38 @@ class InstructionLayoutAnalyzer:
 
         log("%s%s: %s%s\t\t%s%s%s\n" %
             (Colors.WARNING, addr, Colors.OKGREEN, opcode, Colors.FAIL, instr, Colors.ENDC))
+        d = dict()
 
         if m1:
+            d['src'] = m1.group(2).strip()
+            d['dst'] = m1.group(3).strip()
+            d['jmp-addr'] = m1.group(4).strip()
+            d['jmp-sym']  = m1.group(5).strip()
             dbg("1 movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>\n")
-            return BinaryAtom(BinaryAtom.TYPE_1, line, addr, opcode, m1)
+            return BinaryAtom(BinaryAtom.TYPE_1, line, addr, opcode, d)
         elif m2:
+            d['src'] = m2.group(2).strip()
+            d['dst'] = m2.group(3).strip()
             dbg("2 mov    0x18(%rsp),%r12\n")
-            return BinaryAtom(BinaryAtom.TYPE_2, line, addr, opcode, m2)
+            return BinaryAtom(BinaryAtom.TYPE_2, line, addr, opcode, d)
         elif m3:
+            d['src'] = m3.group(2).strip()
+            d['jmp-addr'] = m3.group(3).strip()
+            d['jmp-sym']  = m3.group(4).strip()
             dbg("3 jmpq   *0x207132(%rip)        # 608218 <_GLOBAL_OFFSET_TABLE_+0x28>\n")
-            return BinaryAtom(BinaryAtom.TYPE_3, line, addr, opcode, m3)
+            return BinaryAtom(BinaryAtom.TYPE_3, line, addr, opcode, d)
         elif m4:
+            d['src'] = m4.group(2).strip()
+            d['jmp-addr'] = m4.group(3).strip()
             dbg("4 jne    404e60 <__libc_csu_init+0x50>\n")
-            return BinaryAtom(BinaryAtom.TYPE_4, line, addr, opcode, m4)
+            return BinaryAtom(BinaryAtom.TYPE_4, line, addr, opcode, d)
         elif m5:
+            d['src'] = m5.group(2).strip()
             dbg("5 jmp    404b20\n")
-            return BinaryAtom(BinaryAtom.TYPE_5, line, addr, opcode, m5)
+            return BinaryAtom(BinaryAtom.TYPE_5, line, addr, opcode, d)
         elif m6:
             dbg("6 ret\n")
-            return BinaryAtom(BinaryAtom.TYPE_6, line, addr, opcode, m6)
+            return BinaryAtom(BinaryAtom.TYPE_6, line, addr, opcode, d)
         else:
             log("Something wrong here; %s" % (line))
             sys.exit(1)
