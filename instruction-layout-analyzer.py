@@ -16,20 +16,28 @@ class BinaryAtom:
     TYPE_5 = 5
     TYPE_6 = 6
 
-    def __init__(self, b_type, match):
+    CAT_UNKNOWN = 0
+
+    def __init__(self, b_type, line, addr, opcode, match):
+        self.addr       = addr
+        self.opcode_str = opcode
+        self.opcode_len = len(opcode.replace(" ", "")) / 2
+        msg("opcode len: %d\n" % (self.opcode_len))
+        self.atom_type  = b_type
+        self.category   = BinaryAtom.CAT_UNKNOWN
+
         if b_type == BinaryAtom.TYPE_1:
-            self.atom_type = BinaryAtom.TYPE_1
-            mnemonic = match.group(1).strip()
+            self.addr = match.group(1).strip()
         elif b_type == BinaryAtom.TYPE_2:
-            self.atom_type = BinaryAtom.TYPE_2
+            pass
         elif b_type == BinaryAtom.TYPE_3:
-            self.atom_type = BinaryAtom.TYPE_3
+            pass
         elif b_type == BinaryAtom.TYPE_4:
-            self.atom_type = BinaryAtom.TYPE_4
+            pass
         elif b_type == BinaryAtom.TYPE_5:
-            self.atom_type = BinaryAtom.TYPE_5
+            pass
         elif b_type == BinaryAtom.TYPE_6:
-            self.atom_type = BinaryAtom.TYPE_6
+            pass
         else:
             raise Exception("unknown code")
         
@@ -88,22 +96,22 @@ class InstructionLayoutAnalyzer:
 
         if m1:
             dbg("1 movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>\n")
-            return BinaryAtom(BinaryAtom.TYPE_1, match)
+            return BinaryAtom(BinaryAtom.TYPE_1, line, addr, opcode, m1)
         elif m2:
             dbg("2 mov    0x18(%rsp),%r12\n")
-            return BinaryAtom(BinaryAtom.TYPE_2, match)
+            return BinaryAtom(BinaryAtom.TYPE_2, line, addr, opcode, m2)
         elif m3:
             dbg("3 jmpq   *0x207132(%rip)        # 608218 <_GLOBAL_OFFSET_TABLE_+0x28>\n")
-            return BinaryAtom(BinaryAtom.TYPE_3, match)
+            return BinaryAtom(BinaryAtom.TYPE_3, line, addr, opcode, m3)
         elif m4:
             dbg("4 jne    404e60 <__libc_csu_init+0x50>\n")
-            return BinaryAtom(BinaryAtom.TYPE_4, match)
+            return BinaryAtom(BinaryAtom.TYPE_4, line, addr, opcode, m4)
         elif m5:
             dbg("5 jmp    404b20\n")
-            return BinaryAtom(BinaryAtom.TYPE_5, match)
+            return BinaryAtom(BinaryAtom.TYPE_5, line, addr, opcode, m5)
         elif m6:
             dbg("6 ret\n")
-            return BinaryAtom(BinaryAtom.TYPE_6, match)
+            return BinaryAtom(BinaryAtom.TYPE_6, line, addr, opcode, m6)
         else:
             log("Something wrong here; %s" % (line))
             sys.exit(1)
@@ -123,6 +131,8 @@ class InstructionLayoutAnalyzer:
         p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in p.stdout.readlines():
             atom = self.parse_line(line.decode("utf-8").strip())
+
+        return
 
         log('pass two: \"%s\"' % (cmd))
         p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -160,6 +170,8 @@ def log(string):
     sys.stderr.write("%s" % (string))
 
 def dbg(string):
+    if not dbg_enabled:
+        return
     sys.stderr.write("%s" % (string))
 
 def msg(string):
