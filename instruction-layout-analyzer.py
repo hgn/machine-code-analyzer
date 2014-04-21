@@ -9,6 +9,8 @@ import re
 
 class BinaryBlob:
 
+    TYPE_SINGLE = 1
+
     def __init__(self):
         pass
 
@@ -49,29 +51,33 @@ class InstructionLayoutAnalyzer:
         # can be used to test regular expressions:
         # http://www.regexr.com/ or http://rubular.com/
         # movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>
-        m1 = re.search(r'(\w+)\s+(\S+),(\S+)\s+#(.+)', instr)
+        m1 = re.search(r'(\w+)\s+(\S+),(\S+)\s+#\s+([\da-f]+)\s+<.+>', instr)
         # mov    0x18(%rsp),%r12
         m2 = re.search(r'(\w+)\s+(\S+),(\S+)', instr)
+        # jmpq   *0x207132(%rip)        # 608218 <_GLOBAL_OFFSET_TABLE_+0x28>
+        m3 = re.search(r'(\w+)\s+(\S+)\s+#\s+([\da-f]+)\s+<.+>', instr)
         # jne    404e60 <__libc_csu_init+0x50>
-        m3 = re.search(r'(\w+)\s+(\S+)\s+(<\S+>)', instr)
+        m4 = re.search(r'(\w+)\s+(\S+)\s+(<\S+>)', instr)
         # jmp    404b20 
-        m4 = re.search(r'(\w+)\s+(\S+)', instr)
+        m5 = re.search(r'(\w+)\s+(\S+)', instr)
         # jmp
-        m5 = re.search(r'(\w+)', instr)
+        m6 = re.search(r'(\w+)', instr)
 
         log("%s%s: %s%s\t\t%s%s%s" %
             (Colors.WARNING, addr, Colors.OKGREEN, opcode, Colors.FAIL, instr, Colors.ENDC))
 
         if m1:
-            log("1 - movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>")
+            dbg("1 movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>")
         elif m2:
-            log("2 - mov    0x18(%rsp),%r12")
+            dbg("2 mov    0x18(%rsp),%r12")
         elif m3:
-            log("3 - jne    404e60 <__libc_csu_init+0x50>")
+            dbg("3 jmpq   *0x207132(%rip)        # 608218 <_GLOBAL_OFFSET_TABLE_+0x28>")
         elif m4:
-            log("4 jmp 404b20")
+            dbg("4 jne    404e60 <__libc_csu_init+0x50>")
         elif m5:
-            log("5 jmp")
+            dbg("5 jmp    404b20")
+        elif m6:
+            dbg("6 ret")
         else:
             log("Something wrong here; %s" % (line))
             sys.exit(1)
@@ -82,7 +88,7 @@ class InstructionLayoutAnalyzer:
         
 
     def parse_line(self, line):
-        #sys.stdout.write("%s\n" % (line))
+        dbg("%s\n" % (line))
         self.divide_parts(line)
 
 
@@ -95,7 +101,9 @@ class InstructionLayoutAnalyzer:
 
 
     def run(self):
-        log("Filename to analyze: %s" % args.argument)
+        out("Instruction Layout Analyzer - 2014")
+        out("URL: https://github.com/hgn/instruction-layout-analyzer")
+        out("Filename to analyze: %s" % args.argument)
         self.open_parse(args.argument)
 
 
@@ -113,10 +121,16 @@ def main(args):
     ila.run()
 
 
-log_enabled = 0
+log_enabled = False
+dbg_enabled = False
 
 def log(string):
     if not log_enabled:
+        return
+    sys.stderr.write("%s\n" % (string))
+
+def dbg(string):
+    if not dbg_enabled:
         return
     sys.stderr.write("%s\n" % (string))
 
@@ -135,10 +149,15 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--verbose",
             help="increase output verbosity",
             action="store_true")
+    parser.add_argument("-d", "--debug",
+            help="debug",
+            action="store_true")
     args = parser.parse_args()
 
     if args.verbose:
         log_enabled = True
+    if args.debug:
+        log_debug = True
 
     if not sys.stdout.isatty():
         # reset colors
