@@ -10,6 +10,15 @@ import re
 class InstructionCategory:
 
     UNKNOWN = 0
+    BRANCH_JUMP = 1
+    LOAD = 2
+    STORE = 3
+    MOVE = 4
+    FLOATING_POINT = 5
+    EXCEPTION_TRAP = 6
+    COMPARISON = 7
+    ARITHMETIC_LOGICAL = 8
+
 
     @staticmethod
     def guess(instructon):
