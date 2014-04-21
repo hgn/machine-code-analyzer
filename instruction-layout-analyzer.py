@@ -7,12 +7,32 @@ import logging
 import subprocess
 import re
 
-class BinaryBlob:
+class BinaryAtom:
 
-    TYPE_SINGLE = 1
+    TYPE_1 = 1
+    TYPE_2 = 2
+    TYPE_3 = 3
+    TYPE_4 = 4
+    TYPE_5 = 5
+    TYPE_6 = 6
 
-    def __init__(self):
-        pass
+    def __init__(self, b_type, match):
+        if b_type == BinaryAtom.TYPE_1:
+            self.atom_type = BinaryAtom.TYPE_1
+            mnemonic = match.group(1).strip()
+        elif b_type == BinaryAtom.TYPE_2:
+            self.atom_type = BinaryAtom.TYPE_2
+        elif b_type == BinaryAtom.TYPE_3:
+            self.atom_type = BinaryAtom.TYPE_3
+        elif b_type == BinaryAtom.TYPE_4:
+            self.atom_type = BinaryAtom.TYPE_4
+        elif b_type == BinaryAtom.TYPE_5:
+            self.atom_type = BinaryAtom.TYPE_5
+        elif b_type == BinaryAtom.TYPE_6:
+            self.atom_type = BinaryAtom.TYPE_6
+        else:
+            raise Exception("unknown code")
+        
 
 
 class JumpAnalyser:
@@ -63,47 +83,57 @@ class InstructionLayoutAnalyzer:
         # jmp
         m6 = re.search(r'(\w+)', instr)
 
-        log("%s%s: %s%s\t\t%s%s%s" %
+        log("%s%s: %s%s\t\t%s%s%s\n" %
             (Colors.WARNING, addr, Colors.OKGREEN, opcode, Colors.FAIL, instr, Colors.ENDC))
 
         if m1:
-            dbg("1 movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>")
+            dbg("1 movsd  0x1e4e(%rip),%xmm1        # 406c28 <symtab.5300+0x48>\n")
+            return BinaryAtom(BinaryAtom.TYPE_1, match)
         elif m2:
-            dbg("2 mov    0x18(%rsp),%r12")
+            dbg("2 mov    0x18(%rsp),%r12\n")
+            return BinaryAtom(BinaryAtom.TYPE_2, match)
         elif m3:
-            dbg("3 jmpq   *0x207132(%rip)        # 608218 <_GLOBAL_OFFSET_TABLE_+0x28>")
+            dbg("3 jmpq   *0x207132(%rip)        # 608218 <_GLOBAL_OFFSET_TABLE_+0x28>\n")
+            return BinaryAtom(BinaryAtom.TYPE_3, match)
         elif m4:
-            dbg("4 jne    404e60 <__libc_csu_init+0x50>")
+            dbg("4 jne    404e60 <__libc_csu_init+0x50>\n")
+            return BinaryAtom(BinaryAtom.TYPE_4, match)
         elif m5:
-            dbg("5 jmp    404b20")
+            dbg("5 jmp    404b20\n")
+            return BinaryAtom(BinaryAtom.TYPE_5, match)
         elif m6:
-            dbg("6 ret")
+            dbg("6 ret\n")
+            return BinaryAtom(BinaryAtom.TYPE_6, match)
         else:
             log("Something wrong here; %s" % (line))
             sys.exit(1)
 
-        mnemonic = match.group(1).strip()
+        return None
 
-        
-        
 
     def parse_line(self, line):
         dbg("%s\n" % (line))
-        self.divide_parts(line)
+        return self.divide_parts(line)
 
 
     def open_parse(self, filename):
         cmd = 'objdump -S %s' % (filename)
+
         log('pass one: \"%s\"' % (cmd))
         p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in p.stdout.readlines():
-            self.parse_line(line.decode("utf-8").strip())
+            atom = self.parse_line(line.decode("utf-8").strip())
+
+        log('pass two: \"%s\"' % (cmd))
+        p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        for line in p.stdout.readlines():
+            atom = self.parse_line(line.decode("utf-8").strip())
 
 
     def run(self):
-        out("Instruction Layout Analyzer - 2014")
-        out("URL: https://github.com/hgn/instruction-layout-analyzer")
-        out("Filename to analyze: %s" % args.argument)
+        msg("Instruction Layout Analyzer - 2014\n")
+        msg("URL: https://github.com/hgn/instruction-layout-analyzer\n")
+        msg("Filename to analyze: %s\n" % args.argument)
         self.open_parse(args.argument)
 
 
@@ -127,15 +157,13 @@ dbg_enabled = False
 def log(string):
     if not log_enabled:
         return
-    sys.stderr.write("%s\n" % (string))
+    sys.stderr.write("%s" % (string))
 
 def dbg(string):
-    if not dbg_enabled:
-        return
-    sys.stderr.write("%s\n" % (string))
+    sys.stderr.write("%s" % (string))
 
-def out(string):
-    sys.stdout.write("%s\n" % (string))
+def msg(string):
+    sys.stdout.write("%s" % (string))
 
  
 if __name__ == '__main__':
