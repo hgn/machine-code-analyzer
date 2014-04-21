@@ -7,6 +7,14 @@ import logging
 import subprocess
 import re
 
+class InstructionCategory:
+
+    UNKNOWN = 0
+
+    @staticmethod
+    def guess(instructon):
+        return InstructionCategory.UNKNOWN
+
 class BinaryAtom:
 
     TYPE_1 = 1
@@ -16,15 +24,14 @@ class BinaryAtom:
     TYPE_5 = 5
     TYPE_6 = 6
 
-    CAT_UNKNOWN = 0
-
     def __init__(self, b_type, line, addr, opcode, match):
+        self.line       = line
         self.addr       = addr
         self.opcode_str = opcode
         self.opcode_len = len(opcode.replace(" ", "")) / 2
         msg("opcode len: %d\n" % (self.opcode_len))
         self.atom_type  = b_type
-        self.category   = BinaryAtom.CAT_UNKNOWN
+        self.category   = InstructionCategory.UNKNOWN
 
         if b_type == BinaryAtom.TYPE_1:
             self.addr = match.group(1).strip()
@@ -40,6 +47,9 @@ class BinaryAtom:
             pass
         else:
             raise Exception("unknown code")
+
+    def print(self):
+        msg("%s\n" % (line)) 
         
 
 
