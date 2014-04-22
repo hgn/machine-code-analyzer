@@ -74,6 +74,11 @@ class BinaryAtom:
         else:
             raise Exception("unknown code")
 
+    def add_opcode(self, opcode):
+        self.opcode_str = "%s %s" % (self.opcode_str, opcode)
+        self.opcode_len += len(opcode.replace(" ", "")) / 2
+
+
     def print(self):
         dbg("%s\n" % (self.line))
         dbg("MNEMONIC: %s  SRC:%s  DST:%s [OPCODE: %s,  LEN:%d]\n" %
@@ -187,12 +192,27 @@ class InstructionLayoutAnalyzer:
         #log("Unknown line: \"%s\"\n" % (line))
 
 
+    def wrapped_line_update(self, line, previous_atom):
+        match = re.search(r'([\da-f]+):\s+((?:[0-9a-f]{2} )+)', line)
+        if match:
+            assert previous_atom != None
+            previous_atom.add_opcode(match.group(2).strip())
+            return True
+        return False
 
-    def parse_line(self, line, context):
+
+    def parse_line(self, line, context, previous_atom):
         # 404e52:   e8 31 c2 ff ff          callq  401088 <_init>
         ret = dict()
         match = re.search(r'([\da-f]+):\s+((?:[0-9a-f]{2} )+)\s+(.*)', line)
         if not match:
+            # Special case overlong wrapped in two lines:
+            #  4046c7:       48 ba cf f7 53 e3 a5    movabs $0x20c49ba5e353f7cf,%rdx
+            #  4046ce:       9b c4 20
+            ret = self.wrapped_line_update(line, previous_atom)
+            if ret:
+                print("updated in function: %s" % (context.function_name))
+                return None
             # no instruction, but maybe function information to
             # update context data
             self.try_parse_update_context(line, context)
@@ -269,10 +289,11 @@ class InstructionLayoutAnalyzer:
         cmd = 'objdump -S %s' % (filename)
         context = Context()
 
+        atom = None
         log('pass one: \"%s\"\n' % (cmd))
         p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in p.stdout.readlines():
-            atom = self.parse_line(line.decode("utf-8").strip(), context)
+            atom = self.parse_line(line.decode("utf-8").strip(), context, atom)
             if atom is None:
                 continue
             # Function Anatomy Analyzer is always processed, because
