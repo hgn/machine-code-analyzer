@@ -1,4 +1,4 @@
-# Instruction and Opcode Analyzer #
+# Machine Code Analyzer #
 
 A two pass code analyzer for x86 and x86\_64, requires debug symbols for full
 analyze capabilities.
