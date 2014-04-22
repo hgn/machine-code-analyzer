@@ -60,7 +60,7 @@ and the number of functions.
 Consider the following end of an function:
 
 
-```
+```gas
 405021:       5d                      pop    %rbp
 405022:       c3                      retq
 405023:       66 2e 0f 1f 84 00 00    nopw   %cs:0x0(%rax,%rax,1)
