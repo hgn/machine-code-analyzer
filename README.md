@@ -13,23 +13,23 @@ space - function calls and long jumps are not analyzed by this module.
 Following data calcalated:
 
 - Jump analyzer
-..- Number of jumps
-..- Average jump distance in bytes
-..- Minimal jump distance in bytes
-..- Maximal jump distance in bytes
-..- Histogram of jumps
+  - Number of jumps
+  - Average jump distance in bytes
+  - Minimal jump distance in bytes
+  - Maximal jump distance in bytes
+  - Histogram of jumps
 - Forward jump analyzer
-..- Number of jumps
-..- Average jump distance in bytes
-..- Minimal jump distance in bytes
-..- Maximal jump distance in bytes
-..- Histogram of jumps
+  - Number of jumps
+  - Average jump distance in bytes
+  - Minimal jump distance in bytes
+  - Maximal jump distance in bytes
+  - Histogram of jumps
 - Number of backward jumps per function
-..- Number of jumps
-..- Average jump distance in bytes
-..- Minimal jump distance in bytes
-..- Maximal jump distance in bytes
-..- Histogram of jumps
+  - Number of jumps
+  - Average jump distance in bytes
+  - Minimal jump distance in bytes
+  - Maximal jump distance in bytes
+  - Histogram of jumps
 
 
 
