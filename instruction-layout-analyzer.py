@@ -84,8 +84,11 @@ class FunctionAnatomyAnalyzer:
 
     def __init__(self):
         self.db = dict()
+        self.len_longest_filename = 10
+        self.len_longest_size = 4
 
     def pass1(self, context, atom):
+        self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
         if not context.function_name in self.db:
             self.db[context.function_name] = dict()
             self.db[context.function_name]['start'] = \
@@ -99,6 +102,7 @@ class FunctionAnatomyAnalyzer:
         self.db[context.function_name]['end'] += atom.opcode_len
         self.db[context.function_name]['size'] = \
                 self.db[context.function_name]['end'] - self.db[context.function_name]['start']
+        self.len_longest_size = max(len(str(self.db[context.function_name]['size'])), self.len_longest_size)
         
 
     def pass2(self, context, atom):
@@ -111,9 +115,11 @@ class FunctionAnatomyAnalyzer:
             self.show_human()
 
     def show_human(self):
-        msg("Functions Anatomy:\n")
+        msg("Functions Size:\n\n")
+        fmt = "%%%d.%ds: %%%dd byte  [start: 0x%%x, end: 0x%%x]\n" % \
+                (self.len_longest_filename, self.len_longest_filename, self.len_longest_size)
         for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
-            msg("%30.30s  [size: %6d byte, start:0x%x, end:0x%x]\n"
+            msg(fmt
                 % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
 
     def show_json(self):
@@ -227,7 +233,7 @@ class InstructionLayoutAnalyzer:
         # jmp
         m6 = re.search(r'(\w+)', instr)
 
-        log("%s%s: %s%s\t\t%s%s%s\n" %
+        dbg("%s%s: %s%s\t\t%s%s%s\n" %
             (Colors.WARNING, addr, Colors.OKGREEN, opcode, Colors.FAIL, instr, Colors.ENDC))
         d = dict()
 
@@ -268,7 +274,7 @@ class InstructionLayoutAnalyzer:
             dbg("6 ret\n")
             return BinaryAtom(BinaryAtom.TYPE_6, line, addr, opcode, d)
         else:
-            log("Something wrong here; %s" % (line))
+            err("Something wrong here; %s" % (line))
             sys.exit(1)
 
         return None
@@ -278,7 +284,7 @@ class InstructionLayoutAnalyzer:
         cmd = 'objdump -S --insn-width=30 %s' % (filename)
         context = Context()
 
-        log('pass one: \"%s\"\n' % (cmd))
+        verbose('pass one: \"%s\"\n' % (cmd))
         p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in p.stdout.readlines():
             atom = self.parse_line(line.decode("utf-8").strip(), context)
@@ -302,9 +308,9 @@ class InstructionLayoutAnalyzer:
 
 
     def run(self):
-        msg("Instruction and Opcode Analyzer - 2014\n")
-        msg("URL: https://github.com/hgn/instruction-layout-analyzer\n")
-        msg("Binary to analyze: %s\n" % args.argument)
+        msg("Instruction and Opcode Analyzer - (C) 2014\n\n")
+        verbose("URL: https://github.com/hgn/instruction-layout-analyzer\n")
+        verbose("Binary to analyze: %s\n" % args.argument)
         self.process(args.argument)
         self.show()
 
@@ -326,7 +332,7 @@ def main(args):
 log_enabled = False
 dbg_enabled = False
 
-def log(string):
+def verbose(string):
     if not log_enabled:
         return
     sys.stderr.write("%s" % (string))
