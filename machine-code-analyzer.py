@@ -199,6 +199,8 @@ class InstructionAnalyser:
 
     def __init__(self):
         self.instructions = dict()
+        self.sum_opcode_length = 0
+        self.max_opcode_length = 0
 
     def add_existing(self, atom):
         self.instructions[atom.mnemonic]['count'] += 1
@@ -219,6 +221,8 @@ class InstructionAnalyser:
         self.instructions[atom.mnemonic]['line'] = atom.line
 
     def pass1(self, context, atom):
+        self.max_opcode_length = max(self.max_opcode_length, atom.opcode_len)
+        self.sum_opcode_length += atom.opcode_len
         if atom.mnemonic in self.instructions:
             self.add_existing(atom)
         else:
@@ -239,6 +243,8 @@ class InstructionAnalyser:
 
         msg("General Information:\n")
         msg("    Instructions: %d\n" % (len(self.instructions.keys())))
+        msg("    Overall Opcode length: %d byte\n" % (self.sum_opcode_length))
+        msg("    Maximal Opcode length: %d byte\n" % (self.max_opcode_length))
         msg("\n")
 
         msg("Detailed Analysis:\n")
