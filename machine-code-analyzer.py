@@ -2,6 +2,7 @@
 
 
 import sys
+import os
 import argparse
 import logging
 import subprocess
@@ -9,6 +10,13 @@ import re
 
 class InstructionCategory:
 
+    # other possible schema:
+    #   Data Movement Instructions
+    #        mov, push, pop, lea
+    #   Arithmetic and Logic Instructions
+    #        shl, not, neg, and, or, xor, idiv
+    #   Control Flow Instructions
+    #        call, ret, cmp, jcondition, jmp
     UNKNOWN = 0
     BRANCH_JUMP = 1
     LOAD = 2
@@ -18,11 +26,48 @@ class InstructionCategory:
     EXCEPTION_TRAP = 6
     COMPARISON = 7
     ARITHMETIC_LOGICAL = 8
+    SIMD = 9
+
+    # http://en.wikipedia.org/wiki/Instruction_set
+    DB = [
+            ["callq", BRANCH_JUMP, "Saves procedure linking information on the stack and branches to function" ],
+            ["retq", BRANCH_JUMP, "" ],
+            ["mov",   MOVE, "Copying of data from one location to another" ],
+            ["movl",   MOVE, "Copying of data from one location to another" ],
+            ["test",   COMPARISON, "Perform  bitwise AND on two operands" ],
+            ["sub",   ARITHMETIC_LOGICAL, "" ],
+            ["je",   BRANCH_JUMP, "" ],
+            ["jne",   BRANCH_JUMP, "" ],
+            ["cvttss2si",   FLOATING_POINT, "Convert Scalar Single-Precision Floating-Point Value to Doubleword Integer with Truncation" ],
+            ["push",  STORE, "Push data onto stack" ],
+            ["jmp",   BRANCH_JUMP, "Transfers program control to a different point in the instruction not save return information" ],
+            ["lea",    MOVE, "Memory addressing calculations" ], # can be seen as ARITHMETIC operation too
+            ["jmpq",   BRANCH_JUMP, "Transfers program control to a different point in the instruction not save return information" ],
+            ["invlpg", EXCEPTION_TRAP, "Invalidate TLB Entry for page at address" ],
+    ]
 
 
     @staticmethod
     def guess(instructon):
+        for i in InstructionCategory.DB:
+            if instructon == i[0]:
+                return i[1]
         return InstructionCategory.UNKNOWN
+
+    @staticmethod
+    def str(cat):
+        if cat == InstructionCategory.UNKNOWN: return "unknown"
+        if cat == InstructionCategory.BRANCH_JUMP: return "BRANCH_JUMP"
+        if cat == InstructionCategory.LOAD: return "LOAD"
+        if cat == InstructionCategory.STORE: return "STORE"
+        if cat == InstructionCategory.MOVE: return "MOVE"
+        if cat == InstructionCategory.FLOATING_POINT: return "FLOATING_POINT"
+        if cat == InstructionCategory.EXCEPTION_TRAP: return "EXCEPTION_TRAP"
+        if cat == InstructionCategory.COMPARISON: return "COMPARISON"
+        if cat == InstructionCategory.ARITHMETIC_LOGICAL: return "ARITHMETIC_LOGICAL"
+        if cat == InstructionCategory.SIMD: return "SIMD"
+        raise Exception("Programmed error - no string repr defined")
+
 
 class Context:
 
@@ -74,11 +119,6 @@ class BinaryAtom:
         else:
             raise Exception("unknown code")
 
-    def add_opcode(self, opcode):
-        self.opcode_str = "%s %s" % (self.opcode_str, opcode)
-        self.opcode_len += len(opcode.replace(" ", "")) / 2
-
-
     def print(self):
         dbg("%s\n" % (self.line))
         dbg("MNEMONIC: %s  SRC:%s  DST:%s [OPCODE: %s,  LEN:%d]\n" %
@@ -89,8 +129,11 @@ class FunctionAnatomyAnalyzer:
 
     def __init__(self):
         self.db = dict()
+        self.len_longest_filename = 10
+        self.len_longest_size = 4
 
     def pass1(self, context, atom):
+        self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
         if not context.function_name in self.db:
             self.db[context.function_name] = dict()
             self.db[context.function_name]['start'] = \
@@ -104,6 +147,7 @@ class FunctionAnatomyAnalyzer:
         self.db[context.function_name]['end'] += atom.opcode_len
         self.db[context.function_name]['size'] = \
                 self.db[context.function_name]['end'] - self.db[context.function_name]['start']
+        self.len_longest_size = max(len(str(self.db[context.function_name]['size'])), self.len_longest_size)
         
 
     def pass2(self, context, atom):
@@ -116,9 +160,11 @@ class FunctionAnatomyAnalyzer:
             self.show_human()
 
     def show_human(self):
-        msg("Functions Anatomy:\n")
+        msg("Functions Size:\n\n")
+        fmt = "%%%d.%ds: %%%dd byte  [start: 0x%%x, end: 0x%%x]\n" % \
+                (self.len_longest_filename, self.len_longest_filename, self.len_longest_size)
         for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
-            msg("%30.30s  [size: %6d byte, start:0x%x, end:0x%x]\n"
+            msg(fmt
                 % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
 
     def show_json(self):
@@ -149,6 +195,70 @@ class FunctionBranchJumpAnalyser:
         pass
 
 
+class InstructionAnalyser:
+
+    def __init__(self):
+        self.instructions = dict()
+
+    def add_existing(self, atom):
+        self.instructions[atom.mnemonic]['count'] += 1
+        # now account instruction length variability
+        if atom.opcode_len in self.instructions[atom.mnemonic]['instruction-lengths']:
+            self.instructions[atom.mnemonic]['instruction-lengths'][atom.opcode_len] += 1
+        else:
+            self.instructions[atom.mnemonic]['instruction-lengths'][atom.opcode_len] = 1
+
+    def add_new(self, atom):
+        self.instructions[atom.mnemonic] = dict()
+        self.instructions[atom.mnemonic]['count'] = 1
+        self.instructions[atom.mnemonic]['category'] = InstructionCategory.guess(atom.mnemonic)
+        # ok, this is more complicated but it is suitable for large
+        # projects with millions of instructions
+        self.instructions[atom.mnemonic]['instruction-lengths'] = dict()
+        self.instructions[atom.mnemonic]['instruction-lengths'][atom.opcode_len] = 1
+        self.instructions[atom.mnemonic]['line'] = atom.line
+
+    def pass1(self, context, atom):
+        if atom.mnemonic in self.instructions:
+            self.add_existing(atom)
+        else:
+            self.add_new(atom)
+
+
+    def pass2(self, context, atom):
+        pass
+
+    def show(self, json=False):
+        if json:
+            self.show_json()
+        else:
+            self.show_human()
+
+    def show_human(self):
+        msg("Program Instructions Analyses:\n\n")
+
+        msg("General Information:\n")
+        msg("    Instructions: %d\n" % (len(self.instructions.keys())))
+        msg("\n")
+
+        msg("Detailed Analysis:\n")
+
+        msg("  Instruction  |  Count   |    Category  |    Length (avg, min, max)\n")
+        msg("--------------------------------------------------------------------\n")
+        for k in sorted(self.instructions.items(), key=lambda item: item[1]['count'], reverse=True):
+            minval = min(k[1]['instruction-lengths'].keys())
+            maxval = max(k[1]['instruction-lengths'].keys())
+            sumval = 0.0
+            for key, value in k[1]['instruction-lengths'].items():
+                sumval += float(key) * float(value)
+            sumval /= float(k[1]['count'])
+            msg("%15.15s %10d %13.13s      %5.1f,%3.d,%3.d\n" %
+                (k[0], k[1]['count'], InstructionCategory.str(k[1]['category']), sumval, minval, maxval))
+
+    def show_json(self):
+        pass
+
+
 class InstructionLayoutAnalyzer:
 
     def __init__(self, args):
@@ -160,7 +270,8 @@ class InstructionLayoutAnalyzer:
     def init_modules(self):
         self.module = dict()
         self.module['FunctionBranchJumpAnalyser'] = FunctionBranchJumpAnalyser()
-        self.module['FunctionAnatomyAnalyzer'] = FunctionAnatomyAnalyzer()
+        self.module['FunctionAnatomyAnalyzer']    = FunctionAnatomyAnalyzer()
+        self.module['InstructionAnalyzer']        = InstructionAnalyser()
 
 
     def try_parse_update_context(self, line, context):
@@ -192,16 +303,13 @@ class InstructionLayoutAnalyzer:
         #log("Unknown line: \"%s\"\n" % (line))
 
 
-    def wrapped_line_update(self, line, previous_atom):
+    def is_wrapped_line_update(self, line):
         match = re.search(r'([\da-f]+):\s+((?:[0-9a-f]{2} )+)', line)
         if match:
-            assert previous_atom != None
-            previous_atom.add_opcode(match.group(2).strip())
-            return True
-        return False
+            raise Exception("Line wrapped!")
 
 
-    def parse_line(self, line, context, previous_atom):
+    def parse_line(self, line, context):
         # 404e52:   e8 31 c2 ff ff          callq  401088 <_init>
         ret = dict()
         match = re.search(r'([\da-f]+):\s+((?:[0-9a-f]{2} )+)\s+(.*)', line)
@@ -209,10 +317,7 @@ class InstructionLayoutAnalyzer:
             # Special case overlong wrapped in two lines:
             #  4046c7:       48 ba cf f7 53 e3 a5    movabs $0x20c49ba5e353f7cf,%rdx
             #  4046ce:       9b c4 20
-            ret = self.wrapped_line_update(line, previous_atom)
-            if ret:
-                print("updated in function: %s" % (context.function_name))
-                return None
+            self.is_wrapped_line_update(line)
             # no instruction, but maybe function information to
             # update context data
             self.try_parse_update_context(line, context)
@@ -238,7 +343,7 @@ class InstructionLayoutAnalyzer:
         # jmp
         m6 = re.search(r'(\w+)', instr)
 
-        log("%s%s: %s%s\t\t%s%s%s\n" %
+        dbg("%s%s: %s%s\t\t%s%s%s\n" %
             (Colors.WARNING, addr, Colors.OKGREEN, opcode, Colors.FAIL, instr, Colors.ENDC))
         d = dict()
 
@@ -279,23 +384,26 @@ class InstructionLayoutAnalyzer:
             dbg("6 ret\n")
             return BinaryAtom(BinaryAtom.TYPE_6, line, addr, opcode, d)
         else:
-            log("Something wrong here; %s" % (line))
+            err("Something wrong here; %s" % (line))
             sys.exit(1)
 
         return None
 
 
     def process(self, filename):
-        cmd = 'objdump -S %s' % (filename)
+        # maximal instruction length is 15 byte, per
+        # "Intel® 64 and IA-32 Architectures Software Developer’s Manual"
+        cmd = 'objdump -S --insn-width=16 %s' % (filename)
         context = Context()
 
-        atom = None
-        log('pass one: \"%s\"\n' % (cmd))
+        verbose('pass one: \"%s\"\n' % (cmd))
         p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in p.stdout.readlines():
-            atom = self.parse_line(line.decode("utf-8").strip(), context, atom)
+            atom = self.parse_line(line.decode("utf-8").strip(), context)
             if atom is None:
                 continue
+            if self.args.instruction_analyzer:
+                self.module['InstructionAnalyzer'].pass1(context, atom)
             # Function Anatomy Analyzer is always processed, because
             # the analyzer serves as a ground work for other analyzes
             self.module['FunctionAnatomyAnalyzer'].pass1(context, atom)
@@ -310,13 +418,15 @@ class InstructionLayoutAnalyzer:
             self.module['FunctionAnatomyAnalyzer'].show(json=args.json)
         if self.args.function_branch_jump:
             self.module['FunctionBranchJumpAnalyser'].show(json=args.json)
+        if self.args.instruction_analyzer:
+            self.module['InstructionAnalyzer'].show(json=args.json)
 
 
 
     def run(self):
-        msg("Instruction and Opcode Analyzer - 2014\n")
-        msg("URL: https://github.com/hgn/instruction-layout-analyzer\n")
-        msg("Binary to analyze: %s\n" % args.argument)
+        msg("Instruction and Opcode Analyzer - (C) 2014\n\n")
+        verbose("URL: https://github.com/hgn/instruction-layout-analyzer\n")
+        verbose("Binary to analyze: %s\n" % args.argument)
         self.process(args.argument)
         self.show()
 
@@ -338,7 +448,7 @@ def main(args):
 log_enabled = False
 dbg_enabled = False
 
-def log(string):
+def verbose(string):
     if not log_enabled:
         return
     sys.stderr.write("%s" % (string))
@@ -371,6 +481,9 @@ if __name__ == '__main__':
             action="store_true")
     parser.add_argument("--function-anatomy",
             help="function anatomy analyzer",
+            action="store_true")
+    parser.add_argument("--instruction-analyzer",
+            help="overview about used instructions",
             action="store_true")
     parser.add_argument("-d", "--debug",
             help="debug",
