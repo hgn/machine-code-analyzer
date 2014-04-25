@@ -433,6 +433,10 @@ class InstructionLayoutAnalyzer:
         msg("Instruction and Opcode Analyzer - (C) 2014\n\n")
         verbose("URL: https://github.com/hgn/instruction-layout-analyzer\n")
         verbose("Binary to analyze: %s\n" % args.argument)
+        statinfo = os.stat(self.pcap_file_path)
+        if statinfo.st_size > 50000:
+            msg("File larger then 50kbyte, analysis may take some seconds")
+
         self.process(args.argument)
         self.show()
 
