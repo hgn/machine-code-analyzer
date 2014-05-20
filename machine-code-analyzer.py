@@ -31,7 +31,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 __programm__ = "machine-code-analyzer"
 __author__   = "Hagen Paul Pfeifer"
-__version__  = "1.7"
+__version__  = "1"
 __license__  = "GPLv3"
 
 # custom exceptions
@@ -71,7 +71,7 @@ class MachineCodeAnalyzer:
             }
 
     def __init__(self):
-        self.start_time = datetime.datetime.today()
+        pass
 
 
     def which(self, program):
@@ -144,12 +144,24 @@ class MachineCodeAnalyzer:
                 if arg == cmd: return True
         return False
 
+    def check_binary_path(self, binary):
+        statinfo = os.stat(binary)
+        if not statinfo.st_size > 0:
+            sys.stderr.write("File %s contains no content" % (binary))
+            return False
+        return True
+
 
     def parse_global_otions(self):
-        if len(sys.argv) <= 1:
+        if len(sys.argv) <= 2:
             self.print_usage()
             sys.stderr.write("Available modules:\n")
             self.print_modules()
+            return None
+
+        self.binary_path = sys.argv[-1]
+        if self.check_binary_path(self.binary_path) == False:
+            sys.stderr.write("Failed to open binary\n")
             return None
 
         # --version can be placed somewhere in the
@@ -190,14 +202,9 @@ class MachineCodeAnalyzer:
             return 1
 
         classinstance = globals()[classtring]()
-        classinstance.run()
+        #classinstance.run()
 
-        time_diff = datetime.datetime.today() - self.start_time
-        time_diff_s = float(time_diff.seconds) + time_diff.microseconds / \
-                      1E6 + time_diff.days * 86400
-        self.logger.info("processing duration: %.4f seconds" % (time_diff_s))
-
-        return ret
+        return 0
 
 
 
