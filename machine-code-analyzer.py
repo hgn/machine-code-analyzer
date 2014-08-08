@@ -113,20 +113,6 @@ class MachineCodeAnalyzer:
                 return full_path
         return None
 
-
-    def check_program(self, program):
-        status = "FAILED"
-        path = self.which(program["name"])
-        if path:
-            status = "OK"
-        else:
-            path = ""
-
-        required = "Required" if program["required"] else "Optional"
-        help     = "" if not program["help"] else program["help"]
-        sys.stdout.write("%-6s %-10s Need: %7s   Path: %-20s  Help: %s\n" % (status, program["name"], required, path, help))
-
-
     def print_version(self):
         sys.stdout.write("%s\n" % (__version__))
 
