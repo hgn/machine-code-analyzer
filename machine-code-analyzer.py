@@ -408,15 +408,20 @@ class InstructionAnalyzer(Common):
     def show_human(self):
         self.msg("Program Instructions Analyses:\n\n")
 
+        overall = 0
+        for key, value in self.instructions.items():
+            overall += value['count']
+
         self.msg("General Information:\n")
-        self.msg("    Instructions: %d\n" % (len(self.instructions.keys())))
+        self.msg("    No different Instructions: %d\n" % (len(self.instructions.keys())))
+        self.msg("    No Instructions: %d\n" % (overall))
         self.msg("    Overall Opcode length: %d byte\n" % (self.sum_opcode_length))
         self.msg("    Maximal Opcode length: %d byte\n" % (self.max_opcode_length))
         self.msg("\n")
 
         self.msg("Detailed Analysis:\n")
 
-        self.msg("  Instruction  |  Count   |    Category  |    Length (avg, min, max)\n")
+        self.msg("  Instruction  |  Count    [    %]  |    Category  | Length (avg, min, max)\n")
         self.msg("--------------------------------------------------------------------\n")
         for k in sorted(self.instructions.items(), key=lambda item: item[1]['count'], reverse=True):
             minval = min(k[1]['instruction-lengths'].keys())
@@ -425,8 +430,9 @@ class InstructionAnalyzer(Common):
             for key, value in k[1]['instruction-lengths'].items():
                 sumval += float(key) * float(value)
             sumval /= float(k[1]['count'])
-            self.msg("%15.15s %10d %13.13s      %5.1f,%3.d,%3.d\n" %
-                (k[0], k[1]['count'], InstructionCategory.str(k[1]['category']), sumval, minval, maxval))
+            percent = (float(k[1]['count']) / (overall)) * 100.0
+            self.msg("%15.15s %10d [%5.2f]  %13.13s      %5.1f,%3.d,%3.d\n" %
+                (k[0], k[1]['count'], percent, InstructionCategory.str(k[1]['category']), sumval, minval, maxval))
 
     def show_json(self):
         pass
