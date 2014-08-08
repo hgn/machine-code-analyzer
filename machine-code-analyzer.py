@@ -43,23 +43,54 @@ class NotImplementedException(InternalException): pass
 class SkipProcessStepException(Exception): pass
 class UnitException(Exception): pass
 
+class Common:
+
+    def err(self, msg):
+        sys.stderr.write(msg)
+
+    def verbose(self, msg):
+        if not self.opts.verbose:
+            return
+        sys.stderr.write(msg)
+
+    def msg(self, msg):
+        sys.stdout.write(msg)
+
+
+class Parser:
+    pass
+
 
 class FunctionAnatomyAnalyzer:
 
     def __init__(self):
         pass
 
-    def dependency(self):
-        return None
-
-
-class InstructionAnalyzer:
-
-    def __init__(self):
+    def run(self):
         pass
 
-    def dependency(self):
-        return None
+
+class InstructionAnalyzer(Common):
+
+    def __init__(self):
+        self.parse_local_options()
+
+    def parse_local_options(self):
+        parser = optparse.OptionParser()
+        parser.usage = "InstructionAnalyzer"
+        parser.add_option( "-v", "--verbose", dest="verbose", default=False,
+                          action="store_true", help="show verbose")
+
+        self.opts, args = parser.parse_args(sys.argv[0:])
+
+        if len(args) != 3:
+            self.err("No <binary> argument given, exiting\n")
+            sys.exit(1)
+
+        self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
+
+    def run(self):
+        pass
 
 
 
@@ -96,34 +127,13 @@ class MachineCodeAnalyzer:
         sys.stdout.write("%-6s %-10s Need: %7s   Path: %-20s  Help: %s\n" % (status, program["name"], required, path, help))
 
 
-    def check_environment(self):
-        programs = [
-          # Required program section
-          { "name":"make",     "required":True, "os":None, "help":"Build environment" },
-
-          # Optional programs
-          { "name":"ss",      "required":False, "os":"linux", "help":"Required Foo" }
-        ]
-
-        sys.stdout.write("Platform: %s\n" % (sys.platform))
-        major, minor, micro, releaselevel, serial = sys.version_info
-        sys.stdout.write("Python: %s.%s.%s [releaselevel: %s, serial: %s]\n\n" %
-                (major, minor, micro, releaselevel, serial))
-
-        sys.stdout.write("Check programs:\n")
-        for program in programs:
-            self.check_program(program)
-        
-
     def print_version(self):
         sys.stdout.write("%s\n" % (__version__))
-
 
     def print_usage(self):
         sys.stderr.write("Usage: mca [-h | --help]" +
                          " [--version]" +
                          " <modulename> [<module-options>] <binary>\n")
-
 
     def print_welcome(self):
         major, minor, micro, releaselevel, serial = sys.version_info
@@ -179,11 +189,6 @@ class MachineCodeAnalyzer:
             self.print_modules()
             return None
 
-        # -c | --check as first argument is treated special
-        if self.args_contains(sys.argv[1:2], "-c", "--check"):
-            self.check_environment()
-            return None
-
         submodule = sys.argv[1].lower()
         if submodule not in MachineCodeAnalyzer.modes:
             self.print_usage()
@@ -202,7 +207,7 @@ class MachineCodeAnalyzer:
             return 1
 
         classinstance = globals()[classtring]()
-        #classinstance.run()
+        classinstance.run()
 
         return 0
 
