@@ -335,14 +335,66 @@ class Parser:
         self.process(self.args.filename)
 
 
-class FunctionAnatomyAnalyzer:
+class FunctionAnatomyAnalyzer(Common):
 
     def __init__(self):
-        pass
+        self.parse_local_options()
+        self.db = dict()
+        self.len_longest_filename = 10
+        self.len_longest_size = 4
+
+    def parse_local_options(self):
+        parser = optparse.OptionParser()
+        parser.usage = "InstructionAnalyzer"
+        parser.add_option( "-v", "--verbose", dest="verbose", default=False,
+                          action="store_true", help="show verbose")
+
+        self.opts, args = parser.parse_args(sys.argv[0:])
+
+        if len(args) != 3:
+            self.err("No <binary> argument given, exiting\n")
+            sys.exit(1)
+
+        self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
+        self.opts.filename = args[-1]
 
     def run(self):
-        pass
+        self.parser = Parser(self.opts)
+        self.parser.run(self)
+        self.show()
 
+    def process(self, context, atom):
+        self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
+        if not context.function_name in self.db:
+            self.db[context.function_name] = dict()
+            self.db[context.function_name]['start'] = \
+                    context.function_start_address
+            self.db[context.function_name]['end'] = \
+                    context.function_start_address + atom.opcode_len
+            self.db[context.function_name]['size'] = \
+                    self.db[context.function_name]['end'] - self.db[context.function_name]['start']
+            return
+
+        self.db[context.function_name]['end'] += atom.opcode_len
+        self.db[context.function_name]['size'] = \
+                self.db[context.function_name]['end'] - self.db[context.function_name]['start']
+        self.len_longest_size = max(len(str(self.db[context.function_name]['size'])), self.len_longest_size)
+
+    def show(self, json=False):
+        if json:
+            self.show_json()
+        else:
+            self.show_human()
+
+    def show_human(self):
+        self.msg("Functions Size:\n\n")
+        fmt = "%%%d.%ds: %%%dd byte  [start: 0x%%x, end: 0x%%x]\n" % \
+                (self.len_longest_filename, self.len_longest_filename, self.len_longest_size)
+        for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
+            self.msg(fmt % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
+
+    def show_json(self):
+        pass
 
 class InstructionAnalyzer(Common):
 
