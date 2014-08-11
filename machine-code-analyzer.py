@@ -124,7 +124,7 @@ class BinaryAtom:
         self.addr       = addr
         self.opcode_str = opcode
         self.opcode_len = len(opcode.replace(" ", "")) / 2
-        self.atom_type  = b_type
+        self.type  = b_type
         self.category   = InstructionCategory.UNKNOWN
 
         self.src = self.dst = self.jmp_addr = self.jmp_sym = None
@@ -373,6 +373,17 @@ class FunctionAnatomyAnalyzer(Common):
         mnemonic_db['-1'] = atom.mnemonic
         mnemonic_db['cnt'] += 1
 
+        # LSAs are not covered here, e.g.
+        # ffffffff8134a35a:       48 29 d4                sub    %rdx,%rsp
+        # We cannot simple make a guess here, so ignore this
+        if not mnemonic_db['stack-usage']:
+            if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
+                if atom.src.startswith('$'):
+                    mnemonic_db['stack-usage'] = int(atom.src[1:], 16)
+                else:
+                    raise Exception("Unknown encoding here")
+
+
     def process(self, context, atom):
         self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
         if not context.function_name in self.db:
@@ -385,6 +396,7 @@ class FunctionAnatomyAnalyzer(Common):
                     self.db[context.function_name]['end'] - self.db[context.function_name]['start']
             self.db[context.function_name]['mnemonic'] = dict()
             self.db[context.function_name]['mnemonic']['cnt'] = 0
+            self.db[context.function_name]['mnemonic']['stack-usage'] = None
             self.process_function_pro_epilogue(context, atom, self.db[context.function_name]['mnemonic'])
             return
 
@@ -416,6 +428,16 @@ class FunctionAnatomyAnalyzer(Common):
                 continue
             self.msg("%s:\n" % (key))
             self.msg("\t%s\n" % (self.db[key]['mnemonic'][0]))
+
+        # Stack Usage per Function
+        for key, value in self.db.items():
+            if key.endswith("@plt"):
+                continue
+            self.msg("%s:\n" % (key))
+            if not self.db[key]['mnemonic']['stack-usage']:
+                self.msg("no stack usage information\n")
+            else:
+                self.msg("\t%d byte\n" % (self.db[key]['mnemonic']['stack-usage']))
 
 
     def show_json(self):
