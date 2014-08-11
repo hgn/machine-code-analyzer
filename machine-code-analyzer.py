@@ -363,6 +363,16 @@ class FunctionAnatomyAnalyzer(Common):
         self.parser.run(self)
         self.show()
 
+
+    def process_function_pro_epilogue(self, context, atom, mnemonic_db):
+        if mnemonic_db['cnt'] < 10:
+            # we capture the first 10 instructions per functions
+            mnemonic_db[mnemonic_db['cnt']] = atom.mnemonic
+        # this will overwriten each time, at the end this entry will hold
+        # the last mnemonic for the function
+        mnemonic_db['-1'] = atom.mnemonic
+        mnemonic_db['cnt'] += 1
+
     def process(self, context, atom):
         self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
         if not context.function_name in self.db:
@@ -373,12 +383,17 @@ class FunctionAnatomyAnalyzer(Common):
                     context.function_start_address + atom.opcode_len
             self.db[context.function_name]['size'] = \
                     self.db[context.function_name]['end'] - self.db[context.function_name]['start']
+            self.db[context.function_name]['mnemonic'] = dict()
+            self.db[context.function_name]['mnemonic']['cnt'] = 0
+            self.process_function_pro_epilogue(context, atom, self.db[context.function_name]['mnemonic'])
             return
 
         self.db[context.function_name]['end'] += atom.opcode_len
         self.db[context.function_name]['size'] = \
                 self.db[context.function_name]['end'] - self.db[context.function_name]['start']
         self.len_longest_size = max(len(str(self.db[context.function_name]['size'])), self.len_longest_size)
+        # last mnemonic in function
+        self.process_function_pro_epilogue(context, atom, self.db[context.function_name]['mnemonic'])
 
     def show(self, json=False):
         if json:
@@ -387,11 +402,21 @@ class FunctionAnatomyAnalyzer(Common):
             self.show_human()
 
     def show_human(self):
+        # Some overall information about functions
+        # Number of Functions, average len, min length, max length, etc
         self.msg("Functions Size:\n\n")
         fmt = "%%%d.%ds: %%%dd byte  [start: 0x%%x, end: 0x%%x]\n" % \
                 (self.len_longest_filename, self.len_longest_filename, self.len_longest_size)
         for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
             self.msg(fmt % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
+
+        # Function Mnemonic Signature Overview
+        for key, value in self.db.items():
+            if key.endswith("@plt"):
+                continue
+            self.msg("%s:\n" % (key))
+            self.msg("\t%s\n" % (self.db[key]['mnemonic'][0]))
+
 
     def show_json(self):
         pass
