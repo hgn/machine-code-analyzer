@@ -512,8 +512,8 @@ class InstructionAnalyzer(Common):
             overall += value['count']
 
         self.msg("General Information:\n")
-        self.msg("    No different Instructions: %d\n" % (len(self.instructions.keys())))
-        self.msg("    No Instructions: %d\n" % (overall))
+        self.msg("    Number Instructions: %d\n" % (overall))
+        self.msg("    Number different Instructions: %d\n" % (len(self.instructions.keys())))
         self.msg("    Overall Opcode length: %d byte\n" % (self.sum_opcode_length))
         self.msg("    Maximal Opcode length: %d byte\n" % (self.max_opcode_length))
         self.msg("\n")
