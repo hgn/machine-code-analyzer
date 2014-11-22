@@ -10,8 +10,8 @@ import datetime
 KERNEL_VERSION = "v3.17"
 
 KERNELDIR        = "%s/%s" % (os.getcwd(), "linux-src")
-KERNEL_SRC_DIR   = "%s/%s" % (KERNELDIR, "linux-src/src")
-KERNEL_BUILD_DIR = "%s/%s" % (KERNELDIR, "linux-src/build")
+KERNEL_SRC_DIR   = "%s/%s" % (KERNELDIR,   "src")
+KERNEL_BUILD_DIR = "%s/%s" % (KERNELDIR,   "build")
 
 NO_CPU = multiprocessing.cpu_count() - 1
 
@@ -31,9 +31,6 @@ if not os.path.exists(KERNEL_SRC_DIR + "/.git"):
     print("\tfile:///usr/src/linux")
     print("\tfile:///home/pfeifer/src/code/01-own/linux-dev/linux")
     line = sys.stdin.readline().rstrip()
-    if line.startswith("file:") and not os.path.isdir(line):
-        print("%s not a locl kernel repository" % (line))
-        exit(1)
     cmd = "git clone %s %s" % (line, KERNEL_SRC_DIR)
     print("Exectute: \"%s\"" % (cmd))
     os.system(cmd)
@@ -43,13 +40,12 @@ if not os.path.exists(KERNEL_SRC_DIR + "/.git"):
 
 os.chdir(KERNEL_SRC_DIR)
 
-kernel_build_dir_abs = "%s/%s" % (os.getcwd(), KERNEL_BUILD_DIR)
-cmd = "make O=%s allyesconfig" % (kernel_build_dir_abs)
+cmd = "make O=%s allyesconfig" % (KERNEL_BUILD_DIR)
 print("Exectute: \"%s\"" % (cmd))
 os.system(cmd)
 
 build_start = datetime.datetime.now()
-cmd = "nice make -j %d O=%s" % (NO_CPU, kernel_build_dir_abs)
+cmd = "nice make -j %d O=%s" % (NO_CPU, KERNEL_BUILD_DIR)
 print("Exectute: \"%s\"" % (cmd))
 os.system(cmd)
 diff = datetime.datetime.now() - build_start
