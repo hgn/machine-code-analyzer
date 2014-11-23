@@ -45,7 +45,8 @@ print("Exectute: \"%s\"" % (cmd))
 os.system(cmd)
 
 build_start = datetime.datetime.now()
-cmd = "nice make -j %d O=%s" % (NO_CPU, KERNEL_BUILD_DIR)
+# EXTRA_CFLAGS=\"-g -fverbose-asm\"
+cmd = "nice make V=1 -j %d O=%s" % (NO_CPU, KERNEL_BUILD_DIR)
 print("Exectute: \"%s\"" % (cmd))
 os.system(cmd)
 diff = datetime.datetime.now() - build_start
