@@ -17,6 +17,14 @@ KERNEL_BUILD_DIR = "%s/%s" % (KERNELDIR,   "build")
 NO_CPU = multiprocessing.cpu_count() - 1
 
 
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
 print("Build kernel in %s" % (KERNELDIR))
 if not os.path.exists(KERNELDIR):
     os.makedirs(KERNELDIR)
@@ -65,4 +73,4 @@ if os.path.isfile(filename):
 else:
     print("Cannot compile kernel!\n")
 
-
+print("vmlinux size: %s" % ( sizeof_fmt(os.stat("vmlinux").st_size)))
