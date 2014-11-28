@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import math
 import os
 import sys
 import readline
@@ -38,6 +39,7 @@ if not os.path.exists(KERNEL_SRC_DIR + "/.git"):
     print("Exectute: \"%s\"" % (cmd))
     os.system(cmd)
 
+original_dir = os.getcwd()
 os.chdir(KERNEL_SRC_DIR)
 
 cmd = "make O=%s allyesconfig" % (KERNEL_BUILD_DIR)
@@ -53,5 +55,14 @@ diff = datetime.datetime.now() - build_start
 diff_min = diff.total_seconds() / 60.0
 print("Build duration: %.1d minutes" % (diff_min))
 
+os.chdir(original_dir)
+
+filename = "%s/vmlinux" % (KERNEL_BUILD_DIR)
+if os.path.isfile(filename):
+    cmd = "cp %s ." % (filename)
+    print("Exectute: \"%s\"" % (cmd))
+    os.system(cmd)
+else:
+    print("Cannot compile kernel!\n")
 
 
