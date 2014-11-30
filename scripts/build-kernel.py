@@ -24,6 +24,13 @@ def sizeof_fmt(num, suffix='B'):
         num /= 1024.0
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
+filename = "%s/vmlinux" % (KERNEL_BUILD_DIR)
+if os.path.isfile(filename):
+    print("Kernel already build, nothing to do (%s)" % (filename))
+    print("(remove or rename file to re-build kernel)")
+    sys.exit(1)
+
+    
 
 print("Build kernel in %s" % (KERNELDIR))
 if not os.path.exists(KERNELDIR):
