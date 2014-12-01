@@ -76,33 +76,20 @@ class InstructionCategory:
     CPUID = 23
     MMXEXT = 24
 
-
-
-    # http://en.wikipedia.org/wiki/Instruction_set
-    DB = [
-            ["callq", BRANCH_JUMP, "Saves procedure linking information on the stack and branches to function" ],
-            ["retq", BRANCH_JUMP, "" ],
-            ["mov",   MOVE, "Copying of data from one location to another" ],
-            ["movl",   MOVE, "Copying of data from one location to another" ],
-            ["test",   COMPARISON, "Perform  bitwise AND on two operands" ],
-            ["sub",   ARITHMETIC_LOGICAL, "" ],
-            ["je",   BRANCH_JUMP, "" ],
-            ["jne",   BRANCH_JUMP, "" ],
-            ["cvttss2si",   FLOATING_POINT, "Convert Scalar Single-Precision Floating-Point Value to Doubleword Integer with Truncation" ],
-            ["push",  STORE, "Push data onto stack" ],
-            ["jmp",   BRANCH_JUMP, "Transfers program control to a different point in the instruction not save return information" ],
-            ["lea",    MOVE, "Memory addressing calculations" ], # can be seen as ARITHMETIC operation too
-            ["jmpq",   BRANCH_JUMP, "Transfers program control to a different point in the instruction not save return information" ],
-            ["invlpg", EXCEPTION_TRAP, "Invalidate TLB Entry for page at address" ],
-    ]
-
     DBn = {
+            """callq retq jne je jmp jmpq""" : [ BRANCH_JUMP, None ],
+            """mov movl lea""" : [ MOVE, None ],
+            """test""" : [ COMPARISON, None ],
+            """sub""" : [ ARITHMETIC_LOGICAL, None ],
+            """cvttss2si""" : [ FLOATING_POINT, None ],
+            """push""" : [ STORE, None ],
+            """invlpg""" : [ EXCEPTION_TRAP, None ],
             """emms movd movq packssdw packsswb packuswb paddb paddd paddsb
             paddsw paddusb paddusw paddw pand pandn pcmpeqb pcmpeqd pcmpeqw
             pcmpgtb pcmpgtd pcmpgtw pmaddwd pmulhw pmullw por pslld psllq psllw
             psrad psraw psrld psrlq psrlw psubb psubd psubsb psubsw psubusb
             psubusw psubw punpckhbw punpckhdq punpckhwd punpcklbw punpckldq
-            punpcklwd pxor""" : { MMX, None },
+            Apunpcklwd pxor""" : [ MMX, None ],
 
             """addps addss andnps andps cmpeqps cmpeqss cmpleps cmpless cmpltps
             cmpltss cmpneqps cmpneqss cmpnleps cmpnless cmpnltps cmpnltss
@@ -111,10 +98,10 @@ class InstructionCategory:
             maxps maxss minps minss movaps movhlps movhps movlhps movlps
             movmskps movntps movss movups mulps mulss orps rcpps rcpss rsqrtps
             rsqrtss shufps sqrtps sqrtss stmxcsr subps subss ucomiss unpckhps
-            unpcklps xorps""" : { SSE, None },
+            unpcklps xorps""" : [ SSE, None ],
             """maskmovq movntq pavgb pavgw pextrw pinsrw pmaxsw pmaxub pminsw
-            pminub pmovmskb pmulhuw psadbw pshufw""" : { MMXEXT, None },
-            """pf2iw pfnacc pfpnacc pi2fw pswapd""" : { E3DN, None },
+            pminub pmovmskb pmulhuw psadbw pshufw""" : [ MMXEXT, None ],
+            """pf2iw pfnacc pfpnacc pi2fw pswapd""" : [ E3DN, None ], # 3DNow!
             """addpd addsd andnpd andpd clflush cmpeqpd cmpeqsd cmplepd cmplesd
             cmpltpd cmpltsd cmpneqpd cmpneqsd cmpnlepd cmpnlesd cmpnltpd
             cmpnltsd cmpordpd cmpordsd cmppd cmpunordpd cmpunordsd comisd
@@ -124,20 +111,20 @@ class InstructionCategory:
             movapd movdq2q movdqa movdqu movhpd movlpd movmskpd movntdq movnti
             movntpd movq2dq movupd mulpd mulsd orpd paddq pmuludq pshufd
             pshufhw pshuflw pslldq psrldq psubq punpckhqdq punpcklqdq shufpd
-            sqrtpd sqrtsd subpd subsd ucomisd unpckhpd unpcklpd xorpd""" : { SSE2, None },
+            sqrtpd sqrtsd subpd subsd ucomisd unpckhpd unpcklpd xorpd""" : [ SSE2, None ],
             """addsubpd addsubps fisttp haddpd haddps hsubpd hsubps lddqu monitor
-            movddup movshdup movsldup mwait""" : { SSE3, None },
+            movddup movshdup movsldup mwait""" : [ SSE3, None ],
             """pabsb pabsd pabsw palignr phaddd phaddsw phaddw phsubd phsubsw
-            phsubw pmaddubsw pmulhrsw pshufb psignb psignd psignw""" : { SSSE3, None },
+            phsubw pmaddubsw pmulhrsw pshufb psignb psignd psignw""" : [ SSSE3, None ],
             """blendpd blendps blendvpd blendvps dppd dpps extractps insertps
             movntdqa mpsadbw packusdw pblendvb pblendw pcmpeqq pextrb pextrd
             pextrq phminposuw pinsrb pinsrd pinsrq pmaxsb pmaxsd pmaxud pmaxuw
             pminsb pminsd pminud pminuw pmovsxbd pmovsxbq pmovsxbw pmovsxdq
             pmovsxwd pmovsxwq pmovzxbd pmovzxbq pmovzxbw pmovzxdq pmovzxwd
-            pmovzxwq pmuldq pmulld ptest roundpd roundps roundsd roundss""" : { SSE41, None },
-            """crc32 pcmpestri pcmpestrm pcmpgtq pcmpistri pcmpistrm popcnt""" : { SSE42, None },
-            """extrq insertq movntsd movntss""" : { SSE4A, None },
-            """aesenc aesenclast aesdec aesdeclast aesimc aeskeygenassist""" : { AES, None },
+            pmovzxwq pmuldq pmulld ptest roundpd roundps roundsd roundss""" : [ SSE41, None ],
+            """crc32 pcmpestri pcmpestrm pcmpgtq pcmpistri pcmpistrm popcnt""" : [ SSE42, None ],
+            """extrq insertq movntsd movntss""" : [ SSE4A, None ],
+            """aesenc aesenclast aesdec aesdeclast aesimc aeskeygenassist""" : [ AES, None ],
             """pclmulhqhqdq pclmulhqlqdq pclmullqhqdq pclmullqlqdq pclmulqdq
             vaddpd vaddps vaddsd vaddss vaddsubpd vaddsubps vaesdec vaesdeclast
             vaesenc vaesenclast vaesimc vaeskeygenassist vandnpd vandnps vandpd
@@ -209,7 +196,7 @@ class InstructionCategory:
             vroundsd vroundss vrsqrtps vrsqrtss vshufpd vshufps vsqrtpd vsqrtps
             vsqrtsd vsqrtss vstmxcsr vsubpd vsubps vsubsd vsubss vtestpd
             vtestps vucomisd vucomiss vunpckhpd vunpckhps vunpcklpd vunpcklps
-            vxorpd vxorps vzeroall vzeroupper""" : { AVX, None },
+            vxorpd vxorps vzeroall vzeroupper""" : [ AVX, None ],
             """vfmadd123pd vfmadd123ps vfmadd123sd vfmadd123ss vfmadd132pd
             vfmadd132ps vfmadd132sd vfmadd132ss vfmadd213pd vfmadd213ps
             vfmadd213sd vfmadd213ss vfmadd231pd vfmadd231ps vfmadd231sd
@@ -235,7 +222,7 @@ class InstructionCategory:
             vfnmsub213pd vfnmsub213ps vfnmsub213sd vfnmsub213ss vfnmsub231pd
             vfnmsub231ps vfnmsub231sd vfnmsub231ss vfnmsub312pd vfnmsub312ps
             vfnmsub312sd vfnmsub312ss vfnmsub321pd vfnmsub321ps vfnmsub321sd
-            vfnmsub321ss""" : { FMA, None },
+            vfnmsub321ss""" : [ FMA, None ],
             """vfmaddpd vfmaddps vfmaddsd vfmaddss vfmaddsubpd vfmaddsubps
             vfmsubaddpd vfmsubaddps vfmsubpd vfmsubps vfmsubsd vfmsubss
             vfnmaddpd vfnmaddps vfnmaddsd vfnmaddss vfnmsubpd vfnmsubps
@@ -246,9 +233,19 @@ class InstructionCategory:
             vpmacsdd vpmacsdqh vpmacsdql vpmacssdd vpmacssdqh vpmacssdql
             vpmacsswd vpmacssww vpmacswd vpmacsww vpmadcsswd vpmadcswd vpperm
             vprotb vprotd vprotq vprotw vpshab vpshad vpshaq vpshaw vpshlb
-            vpshld vpshlq vpshlw""" : { FMA4, None },
-            """cpuid""" : { CPUID, None }
+            vpshld vpshlq vpshlw""" : [ FMA4, None ],
+            """cpuid""" : [ CPUID, None ]
     }
+
+    # key => instruction
+    # value => array of category and description
+    INSTRUCTION_DB = dict()
+
+    @staticmethod
+    def init_instruction_table():
+        for key, value in InstructionCategory.DBn.items():
+            for instruction in key.split():
+                InstructionCategory.INSTRUCTION_DB[instruction] = [value[0], value[1]]
 
 
     @staticmethod
@@ -270,6 +267,21 @@ class InstructionCategory:
         if cat == InstructionCategory.COMPARISON: return "COMPARISON"
         if cat == InstructionCategory.ARITHMETIC_LOGICAL: return "ARITHMETIC_LOGICAL"
         if cat == InstructionCategory.SIMD: return "SIMD"
+        if cat == InstructionCategory.MMX: return "MMX"
+        if cat == InstructionCategory.SSE: return "SSE"
+        if cat == InstructionCategory.E3DN: return "E3DN"
+        if cat == InstructionCategory.SSE2: return "SSE2"
+        if cat == InstructionCategory.SSE3: return "SSE3"
+        if cat == InstructionCategory.SSSE3: return "SSSE3"
+        if cat == InstructionCategory.SSE41: return "SSE41"
+        if cat == InstructionCategory.SSE42: return "SSE42"
+        if cat == InstructionCategory.SSE4A: return "SSE4A"
+        if cat == InstructionCategory.AES: return "AES"
+        if cat == InstructionCategory.AVX: return "AVX"
+        if cat == InstructionCategory.FMA: return "FMA"
+        if cat == InstructionCategory.FMA4: return "FMA4"
+        if cat == InstructionCategory.CPUID: return "CPUID"
+        if cat == InstructionCategory.MMXEXT: return "MMXEXT"
         raise Exception("Programmed error - no string repr defined")
 
 
@@ -716,6 +728,7 @@ class MachineCodeAnalyzer:
             }
 
     def __init__(self):
+        InstructionCategory.init_instruction_table()
         if not sys.stdout.isatty():
             # reset colors
             Colors.HEADER = ''
