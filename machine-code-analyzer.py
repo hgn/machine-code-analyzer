@@ -44,7 +44,7 @@ class UnitException(Exception): pass
 class InstructionCategory:
     UNKNOWN = 0
 
-    # http://flint.cs.yale.edu/cs422/doc/24547012.pdf
+    # E.g. http://flint.cs.yale.edu/cs422/doc/24547012.pdf
     BINARY_ARITHMETIC = 32
     DECIMAL_ARITHMETIC = 33
     LOGICAL = 34
@@ -77,26 +77,41 @@ class InstructionCategory:
     MMXEXT = 24
 
     DBn = {
-            """mov movl cmove xchg bswap xadd push pushq pop in out""" : [ DATA_TRANSFER , None ],
-            """add addl sub adc imul mul div inc neg cmp cmpl cmpq""" : [ BINARY_ARITHMETIC , None ],
-            """daa das aaa aas aam aad""" : [ DECIMAL_ARITHMETIC , None ],
-            """and or not xor""" : [ LOGICAL , None ],
-            """sar shr sal shl rol rcr rcl shrd shld""" : [ SHIFT_ROTATE , None ],
-            """test bt bts btr btc sete""" : [ BIT_BYTE , None ],
-            """jmp je jbe jg jz ja jc jle js loop call callq retq jne jmpq enter leave leaveq ret iret""" : [ CONTROL_TRANSFER , None ],
-            """movs movsb rep""" : [ STRING , None ],
-            """stc clc sti cli pushf popf""" : [ FLAG_CONTROL , None ],
-            """lds les lgs""" : [ SEGMENT_REGISTER , None ],
-            """lea nop nopl ud2 xlat""" : [ MISC, None ],
-            """cvttss2si""" : [ FLOATING_POINT, None ],
-            """invlpg lgdt lldt ltr str arpl lock hlt rsm sysenter sysleave rdtsc""" : [ SYSTEM, None ],
+            """mov movl cmove xchg bswap xadd push pushq pop in out""" :
+            [ DATA_TRANSFER , None ],
+            """add addl sub adc imul mul div inc neg cmp cmpl cmpq""" :
+            [ BINARY_ARITHMETIC , None ],
+            """daa das aaa aas aam aad""" :
+            [ DECIMAL_ARITHMETIC , None ],
+            """and or not xor""" :
+            [ LOGICAL , None ],
+            """sar shr sal shl rol rcr rcl shrd shld""" :
+            [ SHIFT_ROTATE , None ],
+            """test bt bts btr btc sete""" :
+            [ BIT_BYTE , None ],
+            """jmp je jbe jg jz ja jc jle js loop call callq retq jne jmpq
+            enter leave leaveq ret iret""" :
+            [ CONTROL_TRANSFER , None ],
+            """movs movsb rep""" :
+            [ STRING , None ],
+            """stc clc sti cli pushf popf""" :
+            [ FLAG_CONTROL , None ],
+            """lds les lgs""" :
+            [ SEGMENT_REGISTER , None ],
+            """lea nop nopl ud2 xlat""" :
+            [ MISC, None ],
+            """cvttss2si""" :
+            [ FLOATING_POINT, None ],
+            """invlpg lgdt lldt ltr str arpl lock hlt rsm sysenter sysleave
+            rdtsc""" :
+            [ SYSTEM, None ],
             """emms movd movq packssdw packsswb packuswb paddb paddd paddsb
             paddsw paddusb paddusw paddw pand pandn pcmpeqb pcmpeqd pcmpeqw
             pcmpgtb pcmpgtd pcmpgtw pmaddwd pmulhw pmullw por pslld psllq psllw
             psrad psraw psrld psrlq psrlw psubb psubd psubsb psubsw psubusb
             psubusw psubw punpckhbw punpckhdq punpckhwd punpcklbw punpckldq
-            Apunpcklwd pxor""" : [ MMX, None ],
-
+            punpcklwd pxor""" :
+            [ MMX, None ],
             """addps addss andnps andps cmpeqps cmpeqss cmpleps cmpless cmpltps
             cmpltss cmpneqps cmpneqss cmpnleps cmpnless cmpnltps cmpnltss
             cmpordps cmpordss cmpps cmpss cmpunordps cmpunordss comiss cvtpi2ps
@@ -104,10 +119,13 @@ class InstructionCategory:
             maxps maxss minps minss movaps movhlps movhps movlhps movlps
             movmskps movntps movss movups mulps mulss orps rcpps rcpss rsqrtps
             rsqrtss shufps sqrtps sqrtss stmxcsr subps subss ucomiss unpckhps
-            unpcklps xorps""" : [ SSE, None ],
+            unpcklps xorps""" :
+            [ SSE, None ],
             """maskmovq movntq pavgb pavgw pextrw pinsrw pmaxsw pmaxub pminsw
-            pminub pmovmskb pmulhuw psadbw pshufw""" : [ MMXEXT, None ],
-            """pf2iw pfnacc pfpnacc pi2fw pswapd""" : [ E3DN, None ], # 3DNow!
+            pminub pmovmskb pmulhuw psadbw pshufw""" :
+            [ MMXEXT, None ],
+            """pf2iw pfnacc pfpnacc pi2fw pswapd""" :
+            [ E3DN, None ], # 3DNow!
             """addpd addsd andnpd andpd clflush cmpeqpd cmpeqsd cmplepd cmplesd
             cmpltpd cmpltsd cmpneqpd cmpneqsd cmpnlepd cmpnlesd cmpnltpd
             cmpnltsd cmpordpd cmpordsd cmppd cmpunordpd cmpunordsd comisd
@@ -117,20 +135,27 @@ class InstructionCategory:
             movapd movdq2q movdqa movdqu movhpd movlpd movmskpd movntdq movnti
             movntpd movq2dq movupd mulpd mulsd orpd paddq pmuludq pshufd
             pshufhw pshuflw pslldq psrldq psubq punpckhqdq punpcklqdq shufpd
-            sqrtpd sqrtsd subpd subsd ucomisd unpckhpd unpcklpd xorpd""" : [ SSE2, None ],
+            sqrtpd sqrtsd subpd subsd ucomisd unpckhpd unpcklpd xorpd""" :
+            [ SSE2, None ],
             """addsubpd addsubps fisttp haddpd haddps hsubpd hsubps lddqu monitor
-            movddup movshdup movsldup mwait""" : [ SSE3, None ],
+            movddup movshdup movsldup mwait""" :
+            [ SSE3, None ],
             """pabsb pabsd pabsw palignr phaddd phaddsw phaddw phsubd phsubsw
-            phsubw pmaddubsw pmulhrsw pshufb psignb psignd psignw""" : [ SSSE3, None ],
+            phsubw pmaddubsw pmulhrsw pshufb psignb psignd psignw""" :
+            [ SSSE3, None ],
             """blendpd blendps blendvpd blendvps dppd dpps extractps insertps
             movntdqa mpsadbw packusdw pblendvb pblendw pcmpeqq pextrb pextrd
             pextrq phminposuw pinsrb pinsrd pinsrq pmaxsb pmaxsd pmaxud pmaxuw
             pminsb pminsd pminud pminuw pmovsxbd pmovsxbq pmovsxbw pmovsxdq
             pmovsxwd pmovsxwq pmovzxbd pmovzxbq pmovzxbw pmovzxdq pmovzxwd
-            pmovzxwq pmuldq pmulld ptest roundpd roundps roundsd roundss""" : [ SSE41, None ],
-            """crc32 pcmpestri pcmpestrm pcmpgtq pcmpistri pcmpistrm popcnt""" : [ SSE42, None ],
-            """extrq insertq movntsd movntss""" : [ SSE4A, None ],
-            """aesenc aesenclast aesdec aesdeclast aesimc aeskeygenassist""" : [ AES, None ],
+            pmovzxwq pmuldq pmulld ptest roundpd roundps roundsd roundss""" :
+            [ SSE41, None ],
+            """crc32 pcmpestri pcmpestrm pcmpgtq pcmpistri pcmpistrm popcnt""" :
+            [ SSE42, None ],
+            """extrq insertq movntsd movntss""" :
+            [ SSE4A, None ],
+            """aesenc aesenclast aesdec aesdeclast aesimc aeskeygenassist""" :
+            [ AES, None ],
             """pclmulhqhqdq pclmulhqlqdq pclmullqhqdq pclmullqlqdq pclmulqdq
             vaddpd vaddps vaddsd vaddss vaddsubpd vaddsubps vaesdec vaesdeclast
             vaesenc vaesenclast vaesimc vaeskeygenassist vandnpd vandnps vandpd
@@ -202,7 +227,8 @@ class InstructionCategory:
             vroundsd vroundss vrsqrtps vrsqrtss vshufpd vshufps vsqrtpd vsqrtps
             vsqrtsd vsqrtss vstmxcsr vsubpd vsubps vsubsd vsubss vtestpd
             vtestps vucomisd vucomiss vunpckhpd vunpckhps vunpcklpd vunpcklps
-            vxorpd vxorps vzeroall vzeroupper""" : [ AVX, None ],
+            vxorpd vxorps vzeroall vzeroupper""" :
+            [ AVX, None ],
             """vfmadd123pd vfmadd123ps vfmadd123sd vfmadd123ss vfmadd132pd
             vfmadd132ps vfmadd132sd vfmadd132ss vfmadd213pd vfmadd213ps
             vfmadd213sd vfmadd213ss vfmadd231pd vfmadd231ps vfmadd231sd
@@ -228,7 +254,8 @@ class InstructionCategory:
             vfnmsub213pd vfnmsub213ps vfnmsub213sd vfnmsub213ss vfnmsub231pd
             vfnmsub231ps vfnmsub231sd vfnmsub231ss vfnmsub312pd vfnmsub312ps
             vfnmsub312sd vfnmsub312ss vfnmsub321pd vfnmsub321ps vfnmsub321sd
-            vfnmsub321ss""" : [ FMA, None ],
+            vfnmsub321ss""" :
+            [ FMA, None ],
             """vfmaddpd vfmaddps vfmaddsd vfmaddss vfmaddsubpd vfmaddsubps
             vfmsubaddpd vfmsubaddps vfmsubpd vfmsubps vfmsubsd vfmsubss
             vfnmaddpd vfnmaddps vfnmaddsd vfnmaddss vfnmsubpd vfnmsubps
@@ -239,8 +266,10 @@ class InstructionCategory:
             vpmacsdd vpmacsdqh vpmacsdql vpmacssdd vpmacssdqh vpmacssdql
             vpmacsswd vpmacssww vpmacswd vpmacsww vpmadcsswd vpmadcswd vpperm
             vprotb vprotd vprotq vprotw vpshab vpshad vpshaq vpshaw vpshlb
-            vpshld vpshlq vpshlw""" : [ FMA4, None ],
-            """cpuid""" : [ CPUID, None ]
+            vpshld vpshlq vpshlw""" :
+            [ FMA4, None ],
+            """cpuid""" :
+            [ CPUID, None ]
     }
 
     # key => instruction
