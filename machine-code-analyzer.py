@@ -42,23 +42,23 @@ class UnitException(Exception): pass
 
 
 class InstructionCategory:
-
-    # other possible schema:
-    #   Data Movement Instructions
-    #        mov, push, pop, lea
-    #   Arithmetic and Logic Instructions
-    #        shl, not, neg, and, or, xor, idiv
-    #   Control Flow Instructions
-    #        call, ret, cmp, jcondition, jmp
     UNKNOWN = 0
-    BRANCH_JUMP = 1
-    LOAD = 2
-    STORE = 3
-    MOVE = 4
-    FLOATING_POINT = 5
-    EXCEPTION_TRAP = 6
-    COMPARISON = 7
-    ARITHMETIC_LOGICAL = 8
+
+    # http://flint.cs.yale.edu/cs422/doc/24547012.pdf
+    BINARY_ARITHMETIC = 32
+    DECIMAL_ARITHMETIC = 33
+    LOGICAL = 34
+    SHIFT_ROTATE = 35
+    BIT_BYTE = 6
+    CONTROL_TRANSFER = 37
+    STRING = 38
+    FLAG_CONTROL = 39
+    SEGMENT_REGISTER = 40
+    MISC = 41
+    DATA_TRANSFER =  42
+    FLOATING_POINT = 43
+    SYSTEM = 44
+
     SIMD = 9
     MMX = 10
     SSE = 11
@@ -77,13 +77,19 @@ class InstructionCategory:
     MMXEXT = 24
 
     DBn = {
-            """callq retq jne je jmp jmpq""" : [ BRANCH_JUMP, None ],
-            """mov movl lea""" : [ MOVE, None ],
-            """test""" : [ COMPARISON, None ],
-            """sub""" : [ ARITHMETIC_LOGICAL, None ],
+            """mov movl cmove xchg bswap xadd push pushq pop in out""" : [ DATA_TRANSFER , None ],
+            """add addl sub adc imul mul div inc neg cmp cmpl cmpq""" : [ BINARY_ARITHMETIC , None ],
+            """daa das aaa aas aam aad""" : [ DECIMAL_ARITHMETIC , None ],
+            """and or not xor""" : [ LOGICAL , None ],
+            """sar shr sal shl rol rcr rcl shrd shld""" : [ SHIFT_ROTATE , None ],
+            """test bt bts btr btc sete""" : [ BIT_BYTE , None ],
+            """jmp je jbe jg jz ja jc jle js loop call callq retq jne jmpq enter leave leaveq ret iret""" : [ CONTROL_TRANSFER , None ],
+            """movs movsb rep""" : [ STRING , None ],
+            """stc clc sti cli pushf popf""" : [ FLAG_CONTROL , None ],
+            """lds les lgs""" : [ SEGMENT_REGISTER , None ],
+            """lea nop nopl ud2 xlat""" : [ MISC, None ],
             """cvttss2si""" : [ FLOATING_POINT, None ],
-            """push""" : [ STORE, None ],
-            """invlpg""" : [ EXCEPTION_TRAP, None ],
+            """invlpg lgdt lldt ltr str arpl lock hlt rsm sysenter sysleave rdtsc""" : [ SYSTEM, None ],
             """emms movd movq packssdw packsswb packuswb paddb paddd paddsb
             paddsw paddusb paddusw paddw pand pandn pcmpeqb pcmpeqd pcmpeqw
             pcmpgtb pcmpgtd pcmpgtw pmaddwd pmulhw pmullw por pslld psllq psllw
@@ -239,33 +245,42 @@ class InstructionCategory:
 
     # key => instruction
     # value => array of category and description
-    INSTRUCTION_DB = dict()
+    lookup_table = dict()
+
 
     @staticmethod
     def init_instruction_table():
         for key, value in InstructionCategory.DBn.items():
             for instruction in key.split():
-                InstructionCategory.INSTRUCTION_DB[instruction] = [value[0], value[1]]
+                InstructionCategory.lookup_table[instruction] = [value[0], value[1]]
 
 
     @staticmethod
     def guess(instructon):
-        for i in InstructionCategory.DB:
-            if instructon == i[0]:
-                return i[1]
+        if instructon in InstructionCategory.lookup_table:
+            return InstructionCategory.lookup_table[instructon][0]
         return InstructionCategory.UNKNOWN
+
 
     @staticmethod
     def str(cat):
         if cat == InstructionCategory.UNKNOWN: return "unknown"
-        if cat == InstructionCategory.BRANCH_JUMP: return "BRANCH_JUMP"
-        if cat == InstructionCategory.LOAD: return "LOAD"
-        if cat == InstructionCategory.STORE: return "STORE"
-        if cat == InstructionCategory.MOVE: return "MOVE"
+
+        if cat == InstructionCategory.DATA_TRANSFER: return "DATA_TRANSFER"
+        if cat == InstructionCategory.BINARY_ARITHMETIC: return "BINARY_ARITHMETIC"
+        if cat == InstructionCategory.DECIMAL_ARITHMETIC: return "DECIMAL_ARITHMETIC"
+        if cat == InstructionCategory.LOGICAL: return "LOGICAL"
+        if cat == InstructionCategory.SHIFT_ROTATE: return "SHIFT_ROTATE"
+        if cat == InstructionCategory.BIT_BYTE: return "BIT_BYTE"
+        if cat == InstructionCategory.CONTROL_TRANSFER: return "CONTROL_TRANSFER"
+        if cat == InstructionCategory.STRING: return "STRING"
+        if cat == InstructionCategory.FLAG_CONTROL: return "FLAG_CONTROL"
+        if cat == InstructionCategory.SEGMENT_REGISTER: return "SEGMENT_REGISTER"
+        if cat == InstructionCategory.MISC: return "MISC"
+        if cat == InstructionCategory.DATA_TRANSFER: return "DATA_TRANSFER"
         if cat == InstructionCategory.FLOATING_POINT: return "FLOATING_POINT"
-        if cat == InstructionCategory.EXCEPTION_TRAP: return "EXCEPTION_TRAP"
-        if cat == InstructionCategory.COMPARISON: return "COMPARISON"
-        if cat == InstructionCategory.ARITHMETIC_LOGICAL: return "ARITHMETIC_LOGICAL"
+        if cat == InstructionCategory.SYSTEM: return "SYSTEM"
+
         if cat == InstructionCategory.SIMD: return "SIMD"
         if cat == InstructionCategory.MMX: return "MMX"
         if cat == InstructionCategory.SSE: return "SSE"
@@ -285,12 +300,14 @@ class InstructionCategory:
         raise Exception("Programmed error - no string repr defined")
 
 
+
 class Context:
 
     def __init__(self):
         self.function_name = None
         self.function_start_address  = None
         self.section_name  = None
+
 
 
 class BinaryAtom:
@@ -301,6 +318,7 @@ class BinaryAtom:
     TYPE_4 = 4
     TYPE_5 = 5
     TYPE_6 = 6
+
 
     def __init__(self, b_type, line, addr, opcode, kwargs):
         self.line       = line
@@ -335,10 +353,12 @@ class BinaryAtom:
         else:
             raise Exception("unknown code")
 
+
     def print(self):
         self.caller.verbose("%s\n" % (self.line))
         self.caller.verbose("MNEMONIC: %s  SRC:%s  DST:%s [OPCODE: %s,  LEN:%d]\n" %
             (self.mnemonic, self.src, self.dst,  self.opcode_str, self.opcode_len)) 
+
 
 
 class Common:
@@ -346,16 +366,20 @@ class Common:
     def err(self, msg):
         sys.stderr.write(msg)
 
+
     def verbose(self, msg):
         if not self.opts.verbose:
             return
         sys.stderr.write(msg)
 
+
     def msg(self, msg):
         sys.stdout.write(msg)
 
+
     def debug(self, msg):
         pass
+
 
 
 class Parser:
@@ -363,6 +387,7 @@ class Parser:
     def __init__(self, opts):
         self.args = opts
         self.filename = opts.filename
+
 
     def try_parse_update_context(self, line, context):
         if line == "":
@@ -518,6 +543,7 @@ class Parser:
         self.process(self.args.filename)
 
 
+
 class FunctionAnatomyAnalyzer(Common):
 
     def __init__(self):
@@ -525,6 +551,7 @@ class FunctionAnatomyAnalyzer(Common):
         self.db = dict()
         self.len_longest_filename = 10
         self.len_longest_size = 4
+
 
     def parse_local_options(self):
         parser = optparse.OptionParser()
@@ -540,6 +567,7 @@ class FunctionAnatomyAnalyzer(Common):
 
         self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
         self.opts.filename = args[-1]
+
 
     def run(self):
         self.parser = Parser(self.opts)
@@ -590,11 +618,13 @@ class FunctionAnatomyAnalyzer(Common):
         # last mnemonic in function
         self.process_function_pro_epilogue(context, atom, self.db[context.function_name]['mnemonic'])
 
+
     def show(self, json=False):
         if json:
             self.show_json()
         else:
             self.show_human()
+
 
     def show_human(self):
         # Some overall information about functions
@@ -626,6 +656,7 @@ class FunctionAnatomyAnalyzer(Common):
     def show_json(self):
         pass
 
+
 class InstructionAnalyzer(Common):
 
     def __init__(self):
@@ -633,6 +664,7 @@ class InstructionAnalyzer(Common):
         self.instructions = dict()
         self.sum_opcode_length = 0
         self.max_opcode_length = 0
+
 
     def parse_local_options(self):
         parser = optparse.OptionParser()
@@ -649,10 +681,12 @@ class InstructionAnalyzer(Common):
         self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
         self.opts.filename = args[-1]
 
+
     def run(self):
         self.parser = Parser(self.opts)
         self.parser.run(self)
         self.show()
+
 
     def add_existing(self, atom):
         self.instructions[atom.mnemonic]['count'] += 1
@@ -661,6 +695,7 @@ class InstructionAnalyzer(Common):
             self.instructions[atom.mnemonic]['instruction-lengths'][atom.opcode_len] += 1
         else:
             self.instructions[atom.mnemonic]['instruction-lengths'][atom.opcode_len] = 1
+
 
     def add_new(self, atom):
         self.instructions[atom.mnemonic] = dict()
@@ -671,6 +706,7 @@ class InstructionAnalyzer(Common):
         self.instructions[atom.mnemonic]['instruction-lengths'] = dict()
         self.instructions[atom.mnemonic]['instruction-lengths'][atom.opcode_len] = 1
         self.instructions[atom.mnemonic]['line'] = atom.line
+
 
     def process(self, context, atom):
         self.max_opcode_length = max(self.max_opcode_length, atom.opcode_len)
@@ -686,6 +722,7 @@ class InstructionAnalyzer(Common):
             self.show_json()
         else:
             self.show_human()
+
 
     def show_human(self):
         self.msg("Program Instructions Analyses:\n\n")
@@ -716,6 +753,7 @@ class InstructionAnalyzer(Common):
             self.msg("%15.15s %10d [%5.2f]  %13.13s      %5.1f,%3.d,%3.d\n" %
                 (k[0], k[1]['count'], percent, InstructionCategory.str(k[1]['category']), sumval, minval, maxval))
 
+
     def show_json(self):
         pass
 
@@ -726,6 +764,7 @@ class MachineCodeAnalyzer:
        "function-anatomy":     [ "FunctionAnatomyAnalyzer", "Function anatomy information" ],
        "instruction-analyzer": [ "InstructionAnalyzer",     "Information about instructions" ]
             }
+
 
     def __init__(self):
         InstructionCategory.init_instruction_table()
@@ -739,6 +778,7 @@ class MachineCodeAnalyzer:
             Colors.ENDC = ''
 
 
+
     def which(self, program):
         for path in os.environ["PATH"].split(os.pathsep):
             path = path.strip('"')
@@ -747,13 +787,16 @@ class MachineCodeAnalyzer:
                 return full_path
         return None
 
+
     def print_version(self):
         sys.stdout.write("%s\n" % (__version__))
+
 
     def print_usage(self):
         sys.stderr.write("Usage: mca [-h | --help]" +
                          " [--version]" +
                          " <modulename> [<module-options>] <binary>\n")
+
 
     def print_welcome(self):
         major, minor, micro, releaselevel, serial = sys.version_info
@@ -773,6 +816,7 @@ class MachineCodeAnalyzer:
             for arg in argv:
                 if arg == cmd: return True
         return False
+
 
     def check_binary_path(self, binary):
         statinfo = os.stat(binary)
@@ -828,8 +872,8 @@ class MachineCodeAnalyzer:
 
         classinstance = globals()[classtring]()
         classinstance.run()
-
         return 0
+
 
 class Colors:
     HEADER  = '\033[95m'
