@@ -566,8 +566,8 @@ class Parser:
         self.caller.verbose("URL: https://github.com/hgn/instruction-layout-analyzer\n")
         self.caller.verbose("Binary to analyze: %s\n" % self.args.filename)
         statinfo = os.stat(self.args.filename)
-        if statinfo.st_size > 50000:
-            self.caller.msg("File larger then 50kbyte, analysis may take some time")
+        if statinfo.st_size > 1000000:
+            self.caller.msg("File larger then 1MByte, analysis may take some time")
 
         self.process(self.args.filename)
 
