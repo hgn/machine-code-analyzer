@@ -686,6 +686,7 @@ class FunctionAnatomyAnalyzer(Common):
         pass
 
 
+
 class InstructionAnalyzer(Common):
 
     def __init__(self):
@@ -787,11 +788,84 @@ class InstructionAnalyzer(Common):
         pass
 
 
+
+class StackAnalyzer(Common):
+
+    def __init__(self):
+        self.parse_local_options()
+        self.db = dict()
+        self.len_longest_filename = 10
+        self.len_longest_size = 4
+
+
+    def parse_local_options(self):
+        parser = optparse.OptionParser()
+        parser.usage = "stack"
+        parser.add_option( "-v", "--verbose", dest="verbose", default=False,
+                          action="store_true", help="show verbose")
+
+        self.opts, args = parser.parse_args(sys.argv[0:])
+
+        if len(args) != 3:
+            self.err("No <binary> argument given, exiting\n")
+            sys.exit(1)
+
+        self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
+        self.opts.filename = args[-1]
+
+
+    def run(self):
+        self.parser = Parser(self.opts)
+        self.parser.run(self)
+        self.show()
+
+
+    def process_function_pro_prologue(self, context, atom, func_db):
+        # LSAs are not covered here, e.g.
+        # ffffffff8134a35a:       48 29 d4                sub    %rdx,%rsp
+        # We cannot simple make a guess here, so ignore this
+        if not func_db['stack-usage']:
+            if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
+                if atom.src.startswith('$'):
+                    func_db['stack-usage'] = int(atom.src[1:], 16)
+                else:
+                    raise Exception("Unknown encoding here")
+
+
+    def process(self, context, atom):
+        self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
+        if not context.function_name in self.db:
+            self.db[context.function_name] = dict()
+            self.db[context.function_name]['stack-usage'] = None
+            self.process_function_pro_prologue(context, atom, self.db[context.function_name])
+            return
+
+        self.process_function_pro_prologue(context, atom, self.db[context.function_name])
+
+
+    def show(self, json=False):
+            self.show_human()
+
+
+    def show_human(self):
+        # Stack Usage per Function
+        for function_name, value in self.db.items():
+            if function_name.endswith("@plt"):
+                continue
+            self.msg("%s:\n" % (function_name))
+            if not self.db[function_name]['stack-usage']:
+                self.msg("\tno stack usage information\n")
+            else:
+                self.msg("\t%d byte\n" % (self.db[function_name]['stack-usage']))
+
+
+
 class MachineCodeAnalyzer:
 
     modes = {
        "function-anatomy":     [ "FunctionAnatomyAnalyzer", "Function anatomy information" ],
-       "instruction-analyzer": [ "InstructionAnalyzer",     "Information about instructions" ]
+       "instruction-analyzer": [ "InstructionAnalyzer",     "Information about instructions" ],
+       "stack":                [ "StackAnalyzer", "Stack usage analyzer" ]
             }
 
 
