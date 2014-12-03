@@ -23,6 +23,14 @@ import subprocess
 import pprint
 import re
 
+# Optional packages
+# apt-get install python3-pip  python3-lxml
+# pip3 install pygal
+try:
+    import pygal
+except ImportError:
+    pygal = None
+
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -803,8 +811,14 @@ class StackAnalyzer(Common):
         parser.usage = "stack"
         parser.add_option( "-v", "--verbose", dest="verbose", default=False,
                           action="store_true", help="show verbose")
+        parser.add_option( "-g", "--graphs", dest="graphs", default=False,
+                          action="store_true", help="generate SVG graphs")
 
         self.opts, args = parser.parse_args(sys.argv[0:])
+
+       # if self.opts.graphs:
+        #    self.err("Cannot generate graphs because pycal is not installed\n")
+         #   sys.exit(1)
 
         if len(args) != 3:
             self.err("No <binary> argument given, exiting\n")
@@ -844,7 +858,24 @@ class StackAnalyzer(Common):
 
 
     def show(self, json=False):
-            self.show_human()
+        self.show_human()
+        if self.opts.graphs:
+            self.generate_graphs()
+
+
+    def generate_graphs(self):
+        l = pygal.style.LightStyle
+        l.background='transparent'
+        l.plot_background='transparent'
+
+        pie_chart = pygal.Pie(fill=True, style=l)
+        pie_chart.title = 'Browser usage in February 2012 (in %)'
+        pie_chart.add('IE', 19.5)
+        pie_chart.add('Firefox', 36.6)
+        pie_chart.add('Chrome', 36.3)
+        pie_chart.add('Safari', 4.5)
+        pie_chart.add('Opera', 2.3)
+        pie_chart.render_to_file('bar_chart.svg')
 
 
     def show_human(self):
