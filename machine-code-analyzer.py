@@ -24,8 +24,12 @@ import pprint
 import re
 
 # Optional packages
-# apt-get install python3-pip  python3-lxml
-# pip3 install pygal
+# Arch Linux:
+#   pacman -S extra/python-pip
+# Debian based
+#   aptitude install python3-pip  python3-lxml
+# Finally:
+#   pip3 install pygal
 try:
     import pygal
 except ImportError:
