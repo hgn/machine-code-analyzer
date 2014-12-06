@@ -22,6 +22,7 @@ import optparse
 import subprocess
 import pprint
 import re
+import ctypes
 
 # Optional packages
 # Arch Linux:
@@ -848,6 +849,16 @@ class StackAnalyzer(Common):
                     func_db['stack-usage'] = int(atom.src[1:], 16)
                 else:
                     raise Exception("Unknown encoding here")
+            elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
+                if not atom.src.startswith('$'):
+                    raise Exception("Unknown encoding here")
+                val = int(atom.src[1:], 16)
+                if val > 0xf0000000:
+                    s1 = ctypes.c_uint32(-val)
+                    s1.value += ctypes.c_uint32(0x80000000).value
+                    s1.value += ctypes.c_uint32(0x80000000).value
+                    func_db['stack-usage'] = s1.value
+
 
 
     def process(self, context, atom):
