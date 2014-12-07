@@ -838,27 +838,40 @@ class StackAnalyzer(Common):
         self.parser.run(self)
         self.show()
 
-
-    def process_function_pro_prologue(self, context, atom, func_db):
+    def check_stack_mangling_op(self, context, atom, func_db):
+        # return true if function is mangling with frame
+        # if size is unknown 0 is returned, e.g. LSAs
         # LSAs are not covered here, e.g.
         # ffffffff8134a35a:       48 29 d4                sub    %rdx,%rsp
-        # We cannot simple make a guess here, so ignore this
+        if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
+            if atom.src.startswith('$'):
+                return True, int(atom.src[1:], 16)
+            else:
+                raise Exception("Unknown encoding here")
+        elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
+            # 48 83 e4 f0           and    $0xfffffffffffffff0,%rsp
+            if not atom.src.startswith('$'):
+                raise Exception("Unknown encoding here")
+            val = int(atom.src[1:], 16)
+            if val > 0xf0000000:
+                s1 = ctypes.c_uint32(-val)
+                s1.value += ctypes.c_uint32(0x80000000).value
+                s1.value += ctypes.c_uint32(0x80000000).value
+                return True, s1.value
+        return False, 0
+
+
+    def process_function_pro_prologue(self, context, atom, func_db):
         if not func_db['stack-usage']:
-            if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
-                if atom.src.startswith('$'):
-                    func_db['stack-usage'] = int(atom.src[1:], 16)
-                else:
-                    raise Exception("Unknown encoding here")
-            elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
-                # 48 83 e4 f0           and    $0xfffffffffffffff0,%rsp
-                if not atom.src.startswith('$'):
-                    raise Exception("Unknown encoding here")
-                val = int(atom.src[1:], 16)
-                if val > 0xf0000000:
-                    s1 = ctypes.c_uint32(-val)
-                    s1.value += ctypes.c_uint32(0x80000000).value
-                    s1.value += ctypes.c_uint32(0x80000000).value
-                    func_db['stack-usage'] = s1.value
+            ok, val = self.check_stack_mangling_op(context, atom, func_db)
+            if ok:
+                func_db['stack-usage'] = val
+        else:
+            ok, val = self.check_stack_mangling_op(context, atom, func_db)
+            if ok:
+                func_db['stack-usage'] = val
+                
+
 
 
 
