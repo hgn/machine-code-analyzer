@@ -850,6 +850,7 @@ class StackAnalyzer(Common):
                 else:
                     raise Exception("Unknown encoding here")
             elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
+                # 48 83 e4 f0           and    $0xfffffffffffffff0,%rsp
                 if not atom.src.startswith('$'):
                     raise Exception("Unknown encoding here")
                 val = int(atom.src[1:], 16)
