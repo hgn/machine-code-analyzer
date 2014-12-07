@@ -838,6 +838,7 @@ class StackAnalyzer(Common):
         self.parser.run(self)
         self.show()
 
+
     def check_stack_mangling_op(self, context, atom, func_db):
         # return true if function is mangling with frame
         # if size is unknown 0 is returned, e.g. LSAs
@@ -847,7 +848,11 @@ class StackAnalyzer(Common):
             if atom.src.startswith('$'):
                 return True, int(atom.src[1:], 16)
             else:
-                raise Exception("Unknown encoding here")
+                # 48 29 c4                sub    %rax,%rsp
+                if atom.src == '%rax' or atom.src == '%rdx':
+                    return True, 0
+                else:
+                    raise Exception("Unknown encoding here")
         elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
             # 48 83 e4 f0           and    $0xfffffffffffffff0,%rsp
             if not atom.src.startswith('$'):
@@ -862,27 +867,19 @@ class StackAnalyzer(Common):
 
 
     def process_function_pro_prologue(self, context, atom, func_db):
-        if not func_db['stack-usage']:
-            ok, val = self.check_stack_mangling_op(context, atom, func_db)
-            if ok:
-                func_db['stack-usage'] = val
-        else:
-            ok, val = self.check_stack_mangling_op(context, atom, func_db)
-            if ok:
-                func_db['stack-usage'] = val
-                
-
-
+        ok, val = self.check_stack_mangling_op(context, atom, func_db)
+        if not ok:
+            return
+        func_db['stack-usage-no'] += 1
+        label = 'stack-usage-%d' % (func_db['stack-usage-no'])
+        func_db[label] = val
 
 
     def process(self, context, atom):
         self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
         if not context.function_name in self.db:
             self.db[context.function_name] = dict()
-            self.db[context.function_name]['stack-usage'] = None
-            self.process_function_pro_prologue(context, atom, self.db[context.function_name])
-            return
-
+            self.db[context.function_name]['stack-usage-no'] = 0
         self.process_function_pro_prologue(context, atom, self.db[context.function_name])
 
 
@@ -913,10 +910,17 @@ class StackAnalyzer(Common):
             if function_name.endswith("@plt"):
                 continue
             self.msg("%s:\n" % (function_name))
-            if not self.db[function_name]['stack-usage']:
+            cnt =  self.db[function_name]['stack-usage-no']
+            if cnt == 0:
                 self.msg("\tno stack usage information\n")
-            else:
-                self.msg("\t%d byte\n" % (self.db[function_name]['stack-usage']))
+                continue
+
+            if 'stack-usage-1' in self.db[function_name]:
+                self.msg("\t%d byte\n" % (self.db[function_name]['stack-usage-1']))
+
+            for i in range(cnt - 1):
+                label = 'stack-usage-%d' % (i + 2)
+                self.msg("\tEXT %d byte\n" % (self.db[function_name][label]))
 
 
 
