@@ -867,7 +867,6 @@ class StackAnalyzer(Common):
                 s1 = ctypes.c_uint32(-val)
                 s1.value += ctypes.c_uint32(0x80000000).value
                 s1.value += ctypes.c_uint32(0x80000000).value
-                print s1.value
                 return True, s1.value
         return False, 0
 
