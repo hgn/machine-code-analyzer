@@ -855,6 +855,11 @@ class StackAnalyzer(Common):
                     raise Exception("Unknown encoding here")
         elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
             # 48 83 e4 f0           and    $0xfffffffffffffff0,%rsp
+            # This is smart GCC behavior:
+            # when stack frame of e.g. 128 byte is required is does not
+            # subtract 128 from %rsp, instead  adds -128 byte which can
+            # be encoded as an immediate (imm8) instruction and is thus
+            # shorter as the sub 128 counterpart.
             if not atom.src.startswith('$'):
                 raise Exception("Unknown encoding here")
             val = int(atom.src[1:], 16)
@@ -862,6 +867,7 @@ class StackAnalyzer(Common):
                 s1 = ctypes.c_uint32(-val)
                 s1.value += ctypes.c_uint32(0x80000000).value
                 s1.value += ctypes.c_uint32(0x80000000).value
+                print s1.value
                 return True, s1.value
         return False, 0
 
