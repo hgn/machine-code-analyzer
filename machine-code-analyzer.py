@@ -809,7 +809,8 @@ class StackAnalyzer(Common):
         self.db = dict()
         self.len_longest_filename = 10
         self.len_longest_size = 4
-
+        self.exclude_files = ['_start', '_fini', '__libc_csu_fini', \
+                              '__do_global_dtors_aux', '__libc_csu_init']
 
     def parse_local_options(self):
         parser = optparse.OptionParser()
@@ -913,6 +914,8 @@ class StackAnalyzer(Common):
         # Stack Usage per Function
         for function_name, value in self.db.items():
             if function_name.endswith("@plt"):
+                continue
+            if function_name in self.exclude_files:
                 continue
             self.msg("%s:\n" % (function_name))
             cnt =  self.db[function_name]['stack-usage-no']
