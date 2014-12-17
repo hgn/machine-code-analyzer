@@ -463,7 +463,7 @@ class Parser:
     def is_wrapped_line_update(self, line):
         match = re.search(r'([\da-f]+):\s+((?:[0-9a-f]{2} )+)', line)
         if match:
-            raise Exception("Line wrapped!")
+            raise Exception("Line wrapped:\n%s\n" % (line))
 
 
     def parse_line(self, line, context):
@@ -474,7 +474,7 @@ class Parser:
             # Special case overlong wrapped in two lines:
             #  4046c7:       48 ba cf f7 53 e3 a5    movabs $0x20c49ba5e353f7cf,%rdx
             #  4046ce:       9b c4 20
-            self.is_wrapped_line_update(line)
+            #self.is_wrapped_line_update(line)
             # no instruction, but maybe function information to
             # update context data
             self.try_parse_update_context(line, context)
@@ -580,7 +580,7 @@ class Parser:
         self.caller.verbose("Binary to analyze: %s\n" % self.args.filename)
         statinfo = os.stat(self.args.filename)
         if statinfo.st_size > 1000000:
-            self.caller.msg("File larger then 1MByte, analysis may take some time")
+            self.caller.msg("File larger then 1MByte, analysis may take some time\n")
 
         self.process(self.args.filename)
 
@@ -850,9 +850,10 @@ class StackAnalyzer(Common):
                 return True, int(atom.src[1:], 16)
             else:
                 # 48 29 c4                sub    %rax,%rsp
-                if atom.src == '%rax' or atom.src == '%rdx':
+                if atom.src in ['%rcx', '%rax', '%rdx']:
                     return True, 0
                 else:
+                    print(atom.line)
                     raise Exception("Unknown encoding here")
         elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
             # 48 83 e4 f0           and    $0xfffffffffffffff0,%rsp
@@ -862,6 +863,7 @@ class StackAnalyzer(Common):
             # be encoded as an immediate (imm8) instruction and is thus
             # shorter as the sub 128 counterpart.
             if not atom.src.startswith('$'):
+                print(context)
                 raise Exception("Unknown encoding here")
             val = int(atom.src[1:], 16)
             if val > 0xf0000000:
@@ -911,24 +913,35 @@ class StackAnalyzer(Common):
 
 
     def show_human(self):
-        # Stack Usage per Function
+        # We first sort the entries here, this is somewhat not
+        # Pythonlikelambda but opens the possibility to do a more
+        # advanced sorting
+        sorted_data = []
         for function_name, value in self.db.items():
             if function_name.endswith("@plt"):
                 continue
             if function_name in self.exclude_files:
                 continue
-            self.msg("%s:\n" % (function_name))
             cnt =  self.db[function_name]['stack-usage-no']
             if cnt == 0:
-                self.msg("\tno stack usage information\n")
+                sorted_data.append([function_name, 0, ""])
                 continue
 
-            if 'stack-usage-1' in self.db[function_name]:
-                self.msg("\t%d byte\n" % (self.db[function_name]['stack-usage-1']))
-
+            nested = ""
             for i in range(cnt - 1):
                 label = 'stack-usage-%d' % (i + 2)
-                self.msg("\tEXT %d byte\n" % (self.db[function_name][label]))
+                d = self.db[function_name][label]
+                if d == 0:
+                    nested += "Dynamic "
+                else:
+                    nested += str(d) + " "
+            sorted_data.append([function_name, int(self.db[function_name]['stack-usage-1']), nested])
+
+        sorted_data.sort(reverse=True, key=lambda d: d[1])
+        sys.stdout.write("%30.30s %5.5s   %30.30s\n" % ("Function Name", "Byte", "Multi Level Allocation"))
+        for data in sorted_data:
+            sys.stdout.write("%30.30s %5.d   %20.20s\n" % (data[0], data[1], data[2]))
+
 
 
 
