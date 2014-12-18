@@ -550,7 +550,7 @@ class Parser:
     def process(self, filename):
         # maximal instruction length is 15 byte, per
         # "Intel® 64 and IA-32 Architectures Software Developer’s Manual"
-        cmd = 'objdump -S --insn-width=16 %s' % (filename)
+        cmd = 'objdump -d --insn-width=16 %s' % (filename)
         context = Context()
 
         self.caller.verbose('pass one: \"%s\"\n' % (cmd))
