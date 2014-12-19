@@ -847,13 +847,20 @@ class StackAnalyzer(Common):
         # ffffffff8134a35a:       48 29 d4                sub    %rdx,%rsp
         if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
             if atom.src.startswith('$'):
-                return True, int(atom.src[1:], 16)
+                if val > 0xf0000000:
+                    # really rare path for sub, but still possible
+                    # see next "val > 0xf0000000" statement for an in detail description
+                    s1 = ctypes.c_uint32(-val)
+                    s1.value += ctypes.c_uint32(0x80000000).value
+                    s1.value += ctypes.c_uint32(0x80000000).value
+                    return True, s1.value
+                else:
+                    return True, int(atom.src[1:], 16)
             else:
                 # 48 29 c4                sub    %rax,%rsp
                 if atom.src in ['%rcx', '%rax', '%rdx']:
                     return True, 0
                 else:
-                    print(atom.line)
                     raise Exception("Unknown encoding here")
         elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
             # 48 83 e4 f0           and    $0xfffffffffffffff0,%rsp
@@ -863,7 +870,6 @@ class StackAnalyzer(Common):
             # be encoded as an immediate (imm8) instruction and is thus
             # shorter as the sub 128 counterpart.
             if not atom.src.startswith('$'):
-                print(context)
                 raise Exception("Unknown encoding here")
             val = int(atom.src[1:], 16)
             if val > 0xf0000000:
@@ -874,21 +880,20 @@ class StackAnalyzer(Common):
         return False, 0
 
 
-    def process_function_pro_prologue(self, context, atom, func_db):
+    def process(self, context, atom):
+        if context.function_name in self.db:
+            func_db = self.db[context.function_name]
+        else:
+            func_db = dict()
+            func_db['stack-usage-no'] = 0
         ok, val = self.check_stack_mangling_op(context, atom, func_db)
         if not ok:
             return
+        # add or re-add to global database
+        self.db[context.function_name] = func_db
         func_db['stack-usage-no'] += 1
         label = 'stack-usage-%d' % (func_db['stack-usage-no'])
         func_db[label] = val
-
-
-    def process(self, context, atom):
-        self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
-        if not context.function_name in self.db:
-            self.db[context.function_name] = dict()
-            self.db[context.function_name]['stack-usage-no'] = 0
-        self.process_function_pro_prologue(context, atom, self.db[context.function_name])
 
 
     def show(self, json=False):
