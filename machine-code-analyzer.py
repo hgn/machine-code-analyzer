@@ -933,7 +933,7 @@ class StackAnalyzer(Common):
 
         for i in range(3, 14):
             exp = 2 ** i
-            sys.stdout.write("%3d %5d\n" % (exp, d[exp]))
+            sys.stdout.write("%-5d %6d\n" % (exp, d[exp]))
         sys.stdout.write("\n")
 
 
