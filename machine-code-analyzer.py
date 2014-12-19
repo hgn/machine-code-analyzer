@@ -915,6 +915,28 @@ class StackAnalyzer(Common):
         pie_chart.render_to_file('bar_chart.svg')
 
 
+    def show_bucket_historgram(self, sorted_data):
+        # initialize counter
+        d = dict()
+        for i in range(3, 14):
+            exp = 2 ** i
+            d[exp] = 0
+        
+        for data in sorted_data:
+            if data[1] == 0:
+                continue
+            for i in range(3, 14):
+                exp = 2 ** i
+                if data[1] <= exp:
+                    d[exp] += 1
+                    break
+
+        for i in range(3, 14):
+            exp = 2 ** i
+            sys.stdout.write("%3d %5d\n" % (exp, d[exp]))
+        sys.stdout.write("\n")
+
+
     def show_human(self):
         function_with_stack = len(self.db)
         function_without_stack = len(self.all_function_db)
@@ -947,6 +969,7 @@ class StackAnalyzer(Common):
             sorted_data.append([function_name, int(self.db[function_name]['stack-usage-1']), nested])
 
         sorted_data.sort(reverse=True, key=lambda d: d[1])
+        self.show_bucket_historgram(sorted_data)
         sys.stdout.write("%40.40s %5.5s   %30.30s\n" % ("Function Name", "Byte", "Multi Level Allocation"))
         for data in sorted_data:
             if data[1] == 0:
