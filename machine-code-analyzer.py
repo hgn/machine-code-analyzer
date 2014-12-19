@@ -847,6 +847,7 @@ class StackAnalyzer(Common):
         # ffffffff8134a35a:       48 29 d4                sub    %rdx,%rsp
         if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
             if atom.src.startswith('$'):
+                val = int(atom.src[1:], 16)
                 if val > 0xf0000000:
                     # really rare path for sub, but still possible
                     # see next "val > 0xf0000000" statement for an in detail description
@@ -855,7 +856,7 @@ class StackAnalyzer(Common):
                     s1.value += ctypes.c_uint32(0x80000000).value
                     return True, s1.value
                 else:
-                    return True, int(atom.src[1:], 16)
+                    return True, val
             else:
                 # 48 29 c4                sub    %rax,%rsp
                 if atom.src in ['%rcx', '%rax', '%rdx']:
