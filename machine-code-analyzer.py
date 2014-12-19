@@ -580,7 +580,7 @@ class Parser:
         self.caller.verbose("Binary to analyze: %s\n" % self.args.filename)
         statinfo = os.stat(self.args.filename)
         if statinfo.st_size > 1000000:
-            self.caller.msg("File larger then 1MByte, analysis may take some time\n")
+            self.caller.verbose("File larger then 1MByte, analysis may take some time\n")
 
         self.process(self.args.filename)
 
@@ -807,8 +807,7 @@ class StackAnalyzer(Common):
     def __init__(self):
         self.parse_local_options()
         self.db = dict()
-        self.len_longest_filename = 10
-        self.len_longest_size = 4
+        self.all_function_db = dict()
         self.exclude_files = ['_start', '_fini', '__libc_csu_fini', \
                               '__do_global_dtors_aux', '__libc_csu_init']
 
@@ -821,10 +820,6 @@ class StackAnalyzer(Common):
                           action="store_true", help="generate SVG graphs")
 
         self.opts, args = parser.parse_args(sys.argv[0:])
-
-       # if self.opts.graphs:
-        #    self.err("Cannot generate graphs because pycal is not installed\n")
-         #   sys.exit(1)
 
         if len(args) != 3:
             self.err("No <binary> argument given, exiting\n")
@@ -882,6 +877,8 @@ class StackAnalyzer(Common):
 
 
     def process(self, context, atom):
+        if context.function_name not in self.all_function_db:
+            self.all_function_db[context.function_name] = True
         if context.function_name in self.db:
             func_db = self.db[context.function_name]
         else:
@@ -919,6 +916,12 @@ class StackAnalyzer(Common):
 
 
     def show_human(self):
+        function_with_stack = len(self.db)
+        function_without_stack = len(self.all_function_db)
+        sys.stdout.write("Function with stack utilization: %d\n" % (function_with_stack))
+        sys.stdout.write("Function w/o stack utilization:  %d\n" % (function_without_stack))
+        sys.stdout.write("\n")
+
         # We first sort the entries here, this is somewhat not
         # Pythonlikelambda but opens the possibility to do a more
         # advanced sorting
@@ -944,9 +947,12 @@ class StackAnalyzer(Common):
             sorted_data.append([function_name, int(self.db[function_name]['stack-usage-1']), nested])
 
         sorted_data.sort(reverse=True, key=lambda d: d[1])
-        sys.stdout.write("%30.30s %5.5s   %30.30s\n" % ("Function Name", "Byte", "Multi Level Allocation"))
+        sys.stdout.write("%40.40s %5.5s   %30.30s\n" % ("Function Name", "Byte", "Multi Level Allocation"))
         for data in sorted_data:
-            sys.stdout.write("%30.30s %5.d   %20.20s\n" % (data[0], data[1], data[2]))
+            if data[1] == 0:
+                sys.stdout.write("%-40.40s Dynamic   %-20.20s\n" % (data[0], data[2]))
+            else:
+                sys.stdout.write("%-40.40s %5.d   %20.20s\n" % (data[0], data[1], data[2]))
 
 
 
