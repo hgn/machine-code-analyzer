@@ -99,8 +99,6 @@ disable_config("%s/.config" % (KERNEL_BUILD_DIR))
 cmd = "make O=%s oldconfig" % (KERNEL_BUILD_DIR)
 print("Exectute: \"%s\"" % (cmd))
 os.system(cmd)
-sys.exit(0)
-
 
 build_start = datetime.datetime.now()
 # EXTRA_CFLAGS=\"-g -fverbose-asm\"
