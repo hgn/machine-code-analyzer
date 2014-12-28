@@ -902,8 +902,9 @@ class StackAnalyzer(Common):
 
     def generate_graphs(self):
         l = pygal.style.LightStyle
-        l.background='transparent'
-        l.plot_background='transparent'
+        l.foreground='black'
+        l.background='white'
+        l.plot_background='white'
 
         pie_chart = pygal.Pie(fill=True, style=l)
         pie_chart.title = 'Browser usage in February 2012 (in %)'
