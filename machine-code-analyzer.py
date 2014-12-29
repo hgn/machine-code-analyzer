@@ -815,16 +815,23 @@ class StackAnalyzer(Common):
     def parse_local_options(self):
         parser = optparse.OptionParser()
         parser.usage = "stack"
+        parser.add_option( "-x", "--no-exclude", dest="no_exclude", default=False,
+                action="store_true", help="do *not* exclude some glibc/gcc helper"
+                "runtime functions like __init _start or _do_global_dtors_aux")
         parser.add_option( "-v", "--verbose", dest="verbose", default=False,
-                          action="store_true", help="show verbose")
+                action="store_true", help="show verbose")
         parser.add_option( "-g", "--graphs", dest="graphs", default=False,
-                          action="store_true", help="generate SVG graphs")
+                action="store_true", help="generate SVG graphs")
 
         self.opts, args = parser.parse_args(sys.argv[0:])
 
         if len(args) != 3:
             self.err("No <binary> argument given, exiting\n")
             sys.exit(1)
+
+        if self.opts.no_exclude:
+            # empty list means there will never be a match
+            self.exclude_files = list()
 
         self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
         self.opts.filename = args[-1]
