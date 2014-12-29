@@ -915,9 +915,11 @@ class StackAnalyzer(Common):
         pie_chart.add('Opera', 2.3)
         pie_chart.render_to_file('bar_chart.svg')
 
+    def percent(self, i, j):
+        return (float(i)) * float(j)
 
-    def show_bucket_historgram(self, sorted_data):
-        # initialize counter
+    def show_bucket_historgram(self, sorted_data, overall):
+        sys.stdout.write("Stack Usage Histogram:\n")
         d = dict()
         for i in range(3, 14):
             exp = 2 ** i
@@ -934,7 +936,11 @@ class StackAnalyzer(Common):
 
         for i in range(3, 14):
             exp = 2 ** i
-            sys.stdout.write("%-5d %6d\n" % (exp, d[exp]))
+            if (d[exp] != 0):
+                percent = self.percent(overall, d[exp])
+            else:
+                percent = 0.0
+            sys.stdout.write("%-5d %6d  (%.1f %%)\n" % (exp, d[exp], percent))
         sys.stdout.write("\n")
 
 
@@ -970,7 +976,7 @@ class StackAnalyzer(Common):
             sorted_data.append([function_name, int(self.db[function_name]['stack-usage-1']), nested])
 
         sorted_data.sort(reverse=True, key=lambda d: d[1])
-        self.show_bucket_historgram(sorted_data)
+        self.show_bucket_historgram(sorted_data, function_without_stack)
         sys.stdout.write("%40.40s %5.5s   %30.30s\n" % ("Function Name", "Byte", "Multi Level Allocation"))
         for data in sorted_data:
             if data[1] == 0:
