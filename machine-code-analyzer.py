@@ -805,12 +805,14 @@ class InstructionAnalyzer(Common):
 class StackAnalyzer(Common):
 
     def __init__(self):
-        self.parse_local_options()
-        self.db = dict()
-        self.all_function_db = dict()
         self.exclude_files = ['_start', '_fini', '__libc_csu_fini',
                               '__do_global_dtors_aux', '__libc_csu_init',
-                              '__init']
+                              'register_tm_clones', 'frame_dummy',
+                              '__init', 'deregister_tm_clones', '_init']
+        self.db = dict()
+        self.all_function_db = dict()
+        self.parse_local_options()
+
 
     def parse_local_options(self):
         parser = optparse.OptionParser()
@@ -831,7 +833,7 @@ class StackAnalyzer(Common):
 
         if self.opts.no_exclude:
             # empty list means there will never be a match
-            self.exclude_files = list()
+            self.exclude_files = []
 
         self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
         self.opts.filename = args[-1]
@@ -885,6 +887,12 @@ class StackAnalyzer(Common):
 
 
     def process(self, context, atom):
+        if context.function_name.endswith("@plt"):
+            return
+        if context.function_name.endswith("@plt-0x10"):
+            return
+        if context.function_name in self.exclude_files:
+            return
         if context.function_name not in self.all_function_db:
             self.all_function_db[context.function_name] = True
         if context.function_name in self.db:
@@ -954,7 +962,7 @@ class StackAnalyzer(Common):
 
     def show_human(self):
         function_with_stack = len(self.db)
-        function_without_stack = len(self.all_function_db)
+        function_without_stack = len(self.all_function_db) - function_with_stack
         sys.stdout.write("Function with stack utilization: %d\n" % (function_with_stack))
         sys.stdout.write("Function w/o stack utilization:  %d\n" % (function_without_stack))
         sys.stdout.write("\n")
@@ -964,10 +972,6 @@ class StackAnalyzer(Common):
         # advanced sorting
         sorted_data = []
         for function_name, value in self.db.items():
-            if function_name.endswith("@plt"):
-                continue
-            if function_name in self.exclude_files:
-                continue
             cnt =  self.db[function_name]['stack-usage-no']
             if cnt == 0:
                 sorted_data.append([function_name, 0, ""])
@@ -981,16 +985,18 @@ class StackAnalyzer(Common):
                     nested += "Dynamic "
                 else:
                     nested += str(d) + " "
+            if nested == '':
+                nested = "-"
             sorted_data.append([function_name, int(self.db[function_name]['stack-usage-1']), nested])
 
         sorted_data.sort(reverse=True, key=lambda d: d[1])
         self.show_bucket_historgram(sorted_data, function_without_stack)
-        sys.stdout.write("%40.40s %5.5s   %30.30s\n" % ("Function Name", "Byte", "Multi Level Allocation"))
+        sys.stdout.write("%-40.40s %5.5s   %25.25s\n" % ("Function Name", "Byte", "Multi Level Allocation"))
         for data in sorted_data:
             if data[1] == 0:
                 sys.stdout.write("%-40.40s Dynamic   %-20.20s\n" % (data[0], data[2]))
             else:
-                sys.stdout.write("%-40.40s %5.d   %20.20s\n" % (data[0], data[1], data[2]))
+                sys.stdout.write("%-40.40s %5.d      %-20.20s\n" % (data[0], data[1], data[2]))
 
 
 
