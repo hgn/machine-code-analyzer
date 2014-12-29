@@ -808,8 +808,9 @@ class StackAnalyzer(Common):
         self.parse_local_options()
         self.db = dict()
         self.all_function_db = dict()
-        self.exclude_files = ['_start', '_fini', '__libc_csu_fini', \
-                              '__do_global_dtors_aux', '__libc_csu_init']
+        self.exclude_files = ['_start', '_fini', '__libc_csu_fini',
+                              '__do_global_dtors_aux', '__libc_csu_init',
+                              '__init']
 
     def parse_local_options(self):
         parser = optparse.OptionParser()
@@ -916,7 +917,7 @@ class StackAnalyzer(Common):
         pie_chart.render_to_file('bar_chart.svg')
 
     def percent(self, i, j):
-        return (float(i)) * float(j)
+        return float(i) * float(j)
 
     def show_bucket_historgram(self, sorted_data, overall):
         sys.stdout.write("Stack Usage Histogram:\n")
