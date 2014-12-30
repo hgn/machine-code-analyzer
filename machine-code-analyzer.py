@@ -1031,10 +1031,6 @@ class StackAnalyzer(Common):
         sorted_data = []
         for function_name, value in self.db.items():
             cnt =  self.db[function_name]['stack-usage-no']
-            if cnt == 0:
-                sorted_data.append([function_name, 0, ""])
-                continue
-
             nested = ""
             for i in range(cnt - 1):
                 label = 'stack-usage-%d' % (i + 2)
