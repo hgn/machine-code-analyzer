@@ -850,7 +850,7 @@ class StackAnalyzer(Common):
         # if size is unknown 0 is returned, e.g. LSAs
         # LSAs are not covered here, e.g.
         # ffffffff8134a35a:       48 29 d4                sub    %rdx,%rsp
-        if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
+        if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic in ['sub', 'add'] and atom.dst == '%rsp':
             if atom.src.startswith('$'):
                 val = int(atom.src[1:], 16)
                 if val > 0xf0000000:
@@ -864,7 +864,7 @@ class StackAnalyzer(Common):
                     return True, val
             else:
                 # 48 29 c4                sub    %rax,%rsp
-                if atom.src in ['%rcx', '%rax', '%rdx', '%r11']:
+                if atom.src in ['%rcx', '%rax', '%rdx', '%r8', '%rdi', '%r11']:
                     return True, 0
                 else:
                     raise Exception("Unknown encoding here:\n%s\nIn: \"%s\"" %
@@ -877,7 +877,8 @@ class StackAnalyzer(Common):
             # be encoded as an immediate (imm8) instruction and is thus
             # shorter as the sub 128 counterpart.
             if not atom.src.startswith('$'):
-                raise Exception("Unknown encoding here")
+                raise Exception("Unknown encoding here:\n%s\nIn: \"%s\""  %
+                        (atom.line, context.function_name))
             val = int(atom.src[1:], 16)
             if val > 0xf0000000:
                 s1 = ctypes.c_uint32(-val)
