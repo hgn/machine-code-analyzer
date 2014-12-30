@@ -982,7 +982,8 @@ class StackAnalyzer(Common):
         if self.opts.generate_graphs:
             pie_chart.render_to_file('%s.svg' % (file_out_name))
             sys.stderr.write("# created graph file:  %s.svg\n" % (file_out_name))
-            os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" % (file_out_name, file_out_name))
+            os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" %
+                    (file_out_name, file_out_name))
             sys.stderr.write("# created graph file:  %s.png\n" % (file_out_name))
 
 
@@ -999,15 +1000,18 @@ class StackAnalyzer(Common):
         pie_chart.add('Without Stack Allocation', no_functions_without)
         pie_chart.render_to_file('%s.svg' % (file_out_name))
         sys.stderr.write("# created graph file:  %s.svg\n" % (file_out_name))
-        os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" % (file_out_name, file_out_name))
+        os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" %
+                (file_out_name, file_out_name))
         sys.stderr.write("# created graph file:  %s.png\n" % (file_out_name))
 
 
     def output_with_vs_without(self, no_functions, no_functions_with, no_functions_without):
         percent_w_stack = self.percent(no_functions, no_functions_with)
-        sys.stdout.write("Function with stack utilization: %5d   (%4.0f%% )\n" % (no_functions_with, percent_w_stack))
+        sys.stdout.write("Function with stack utilization: %5d   (%4.0f%% )\n" %
+                (no_functions_with, percent_w_stack))
         percent_wo_stack = self.percent(no_functions, no_functions_without)
-        sys.stdout.write("Function w/o stack utilization:  %5d   (%4.0f%% )\n" % (no_functions_without, percent_wo_stack))
+        sys.stdout.write("Function w/o stack utilization:  %5d   (%4.0f%% )\n" %
+                (no_functions_without, percent_wo_stack))
         sys.stdout.write("\n")
 
         if self.opts.generate_graphs:
