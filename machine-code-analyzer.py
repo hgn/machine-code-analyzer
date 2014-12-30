@@ -842,7 +842,7 @@ class StackAnalyzer(Common):
     def run(self):
         self.parser = Parser(self.opts)
         self.parser.run(self)
-        self.show()
+        self.output()
 
 
     def check_stack_mangling_op(self, context, atom, func_db):
@@ -910,12 +910,6 @@ class StackAnalyzer(Common):
         func_db[label] = val
 
 
-    def show(self, json=False):
-        self.show_human()
-        if self.opts.graphs:
-            self.generate_graphs()
-
-
     def generate_graphs(self):
         l = pygal.style.LightStyle
         l.foreground='black'
@@ -937,7 +931,7 @@ class StackAnalyzer(Common):
             return 0.0
         return (float(j) / float(i)) * 100.0
 
-    def show_bucket_historgram(self, sorted_data, overall):
+    def output_bucket_historgram(self, sorted_data, overall):
         sys.stdout.write("Stack Usage Histogram:\n")
         d = dict()
         for i in range(3, 14):
@@ -963,7 +957,7 @@ class StackAnalyzer(Common):
         sys.stdout.write("\n")
 
 
-    def show_human_with_vs_without(self, no_functions, no_functions_with, no_functions_without):
+    def output_with_vs_without(self, no_functions, no_functions_with, no_functions_without):
         percent_w_stack = self.percent(no_functions, no_functions_with)
         sys.stdout.write("Function with stack utilization: %5d   (%4.0f%% )\n" % (no_functions_with, percent_w_stack))
         percent_wo_stack = self.percent(no_functions, no_functions_without)
@@ -971,12 +965,12 @@ class StackAnalyzer(Common):
         sys.stdout.write("\n")
 
 
-    def show_human(self):
+    def output(self):
         no_functions = len(self.all_function_db)
         function_with_stack = len(self.db)
         function_without_stack = no_functions - function_with_stack
 
-        self.show_human_with_vs_without(no_functions, function_with_stack, function_without_stack)
+        self.output_with_vs_without(no_functions, function_with_stack, function_without_stack)
 
         # We first sort the entries here, this is somewhat not
         # Pythonlikelambda but opens the possibility to do a more
@@ -1001,7 +995,7 @@ class StackAnalyzer(Common):
             sorted_data.append([function_name, int(self.db[function_name]['stack-usage-1']), nested])
 
         sorted_data.sort(reverse=True, key=lambda d: d[1])
-        self.show_bucket_historgram(sorted_data, function_with_stack)
+        self.output_bucket_historgram(sorted_data, function_with_stack)
         sys.stdout.write("%-40.40s %5.5s   %25.25s\n" % ("Function Name", "Byte", "Multi Level Allocation"))
         for data in sorted_data:
             if data[1] == 0:
