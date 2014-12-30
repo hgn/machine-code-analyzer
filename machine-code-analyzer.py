@@ -53,6 +53,16 @@ class NotImplementedException(InternalException): pass
 class SkipProcessStepException(Exception): pass
 class UnitException(Exception): pass
 
+class RetObj:
+
+    STATIC = 0
+    DYNAMIC = 1
+    NO_STACK = 2
+
+    def __init__(self, stack_tyoe):
+        self.stack_tyoe = stack_tyoe
+        self.register = None
+
 
 class InstructionCategory:
     UNKNOWN = 0
@@ -859,13 +869,23 @@ class StackAnalyzer(Common):
                     s1 = ctypes.c_uint32(-val)
                     s1.value += ctypes.c_uint32(0x80000000).value
                     s1.value += ctypes.c_uint32(0x80000000).value
-                    return True, s1.value
+                    retobj = RetObj(RetObj.STATIC)
+                    retobj.res = True
+                    retobj.val = s1.value
+                    return retobj
                 else:
-                    return True, val
+                    retobj = RetObj(RetObj.STATIC)
+                    retobj.res = True
+                    retobj.val = val
+                    return retobj
             else:
                 # 48 29 c4                sub    %rax,%rsp
                 if atom.src in ['%rcx', '%rax', '%rdx', '%r8', '%rdi', '%r11']:
-                    return True, 0
+                    retobj = RetObj(RetObj.DYNAMIC)
+                    retobj.res = True
+                    retobj.val = 0
+                    retobj.register = atom.src
+                    return retobj
                 else:
                     raise Exception("Unknown encoding here:\n%s\nIn: \"%s\"" %
                             (atom.line, context.function_name))
@@ -884,8 +904,16 @@ class StackAnalyzer(Common):
                 s1 = ctypes.c_uint32(-val)
                 s1.value += ctypes.c_uint32(0x80000000).value
                 s1.value += ctypes.c_uint32(0x80000000).value
-                return True, s1.value
-        return False, 0
+                retobj = RetObj(RetObj.STATIC)
+                retobj.res = True
+                retobj.val = s1.value
+                return retobj
+
+        # default case for non stack related instructions
+        retobj = RetObj(RetObj.NO_STACK)
+        retobj.res = False
+        retobj.val = 0
+        return retobj
 
 
     def process(self, context, atom):
@@ -902,20 +930,21 @@ class StackAnalyzer(Common):
         else:
             func_db = dict()
             func_db['stack-usage-no'] = 0
-        ok, val = self.check_stack_mangling_op(context, atom, func_db)
-        if not ok:
+        ret = self.check_stack_mangling_op(context, atom, func_db)
+        if not ret.res:
             return
         # add or re-add to global database
         self.db[context.function_name] = func_db
         func_db['stack-usage-no'] += 1
         label = 'stack-usage-%d' % (func_db['stack-usage-no'])
-        func_db[label] = val
+        func_db[label] = ret.val
 
 
     def percent(self, i, j):
         if j == 0:
             return 0.0
         return (float(j) / float(i)) * 100.0
+
 
     def output_bucket_historgram(self, sorted_data, overall):
         sys.stdout.write("Stack Usage Histogram:\n")
