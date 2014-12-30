@@ -931,7 +931,10 @@ class StackAnalyzer(Common):
         pie_chart.add('Opera', 2.3)
         pie_chart.render_to_file('bar_chart.svg')
 
+
     def percent(self, i, j):
+        if j == 0:
+            return 0.0
         return (float(j) / float(i)) * 100.0
 
     def show_bucket_historgram(self, sorted_data, overall):
@@ -956,16 +959,24 @@ class StackAnalyzer(Common):
                 percent = self.percent(overall, d[exp])
             else:
                 percent = 0.0
-            sys.stdout.write("%-5d %6d  (%.1f %%)\n" % (exp, d[exp], percent))
+            sys.stdout.write("%-5d %6d    (%5.1f%% )\n" % (exp, d[exp], percent))
+        sys.stdout.write("\n")
+
+
+    def show_human_with_vs_without(self, no_functions, no_functions_with, no_functions_without):
+        percent_w_stack = self.percent(no_functions, no_functions_with)
+        sys.stdout.write("Function with stack utilization: %5d   (%4.0f%% )\n" % (no_functions_with, percent_w_stack))
+        percent_wo_stack = self.percent(no_functions, no_functions_without)
+        sys.stdout.write("Function w/o stack utilization:  %5d   (%4.0f%% )\n" % (no_functions_without, percent_wo_stack))
         sys.stdout.write("\n")
 
 
     def show_human(self):
+        no_functions = len(self.all_function_db)
         function_with_stack = len(self.db)
-        function_without_stack = len(self.all_function_db) - function_with_stack
-        sys.stdout.write("Function with stack utilization: %d\n" % (function_with_stack))
-        sys.stdout.write("Function w/o stack utilization:  %d\n" % (function_without_stack))
-        sys.stdout.write("\n")
+        function_without_stack = no_functions - function_with_stack
+
+        self.show_human_with_vs_without(no_functions, function_with_stack, function_without_stack)
 
         # We first sort the entries here, this is somewhat not
         # Pythonlikelambda but opens the possibility to do a more
