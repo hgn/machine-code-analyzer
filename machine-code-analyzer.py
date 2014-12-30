@@ -822,7 +822,7 @@ class StackAnalyzer(Common):
                 "runtime functions like __init _start or _do_global_dtors_aux")
         parser.add_option( "-v", "--verbose", dest="verbose", default=False,
                 action="store_true", help="show verbose")
-        parser.add_option( "-g", "--graphs", dest="graphs", default=False,
+        parser.add_option( "-g", "--graphs", dest="generate_graphs", default=False,
                 action="store_true", help="generate SVG graphs")
 
         self.opts, args = parser.parse_args(sys.argv[0:])
@@ -910,22 +910,6 @@ class StackAnalyzer(Common):
         func_db[label] = val
 
 
-    def generate_graphs(self):
-        l = pygal.style.LightStyle
-        l.foreground='black'
-        l.background='white'
-        l.plot_background='white'
-
-        pie_chart = pygal.Pie(fill=True, style=l)
-        pie_chart.title = 'Browser usage in February 2012 (in %)'
-        pie_chart.add('IE', 19.5)
-        pie_chart.add('Firefox', 36.6)
-        pie_chart.add('Chrome', 36.3)
-        pie_chart.add('Safari', 4.5)
-        pie_chart.add('Opera', 2.3)
-        pie_chart.render_to_file('bar_chart.svg')
-
-
     def percent(self, i, j):
         if j == 0:
             return 0.0
@@ -957,12 +941,32 @@ class StackAnalyzer(Common):
         sys.stdout.write("\n")
 
 
+    def graph_with_vs_without(self, no_functions_with, no_functions_without):
+        file_out_name = 'function-stack-allocation'
+        l = pygal.style.LightStyle
+        l.foreground='black'
+        l.background='white'
+        l.plot_background='white'
+
+        pie_chart = pygal.Pie(fill=True, style=l)
+        pie_chart.title = 'Stack Memory Allocation per Function'
+        pie_chart.add('With Stack Allocation', no_functions_with)
+        pie_chart.add('Without Stack Allocation', no_functions_without)
+        pie_chart.render_to_file('%s.svg' % (file_out_name))
+        sys.stderr.write("# created graph file:  %s.svg\n" % (file_out_name))
+        os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" % (file_out_name, file_out_name))
+        sys.stderr.write("# created graph file:  %s.png\n" % (file_out_name))
+
+
     def output_with_vs_without(self, no_functions, no_functions_with, no_functions_without):
         percent_w_stack = self.percent(no_functions, no_functions_with)
         sys.stdout.write("Function with stack utilization: %5d   (%4.0f%% )\n" % (no_functions_with, percent_w_stack))
         percent_wo_stack = self.percent(no_functions, no_functions_without)
         sys.stdout.write("Function w/o stack utilization:  %5d   (%4.0f%% )\n" % (no_functions_without, percent_wo_stack))
         sys.stdout.write("\n")
+
+        if self.opts.generate_graphs:
+            self.graph_with_vs_without(no_functions_with, no_functions_without)
 
 
     def output(self):
