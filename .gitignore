@@ -5,6 +5,9 @@
 *.elf
 .*
 
+*.png
+*.svg
+
 # Libraries
 *.lib
 *.a

@@ -864,10 +864,11 @@ class StackAnalyzer(Common):
                     return True, val
             else:
                 # 48 29 c4                sub    %rax,%rsp
-                if atom.src in ['%rcx', '%rax', '%rdx']:
+                if atom.src in ['%rcx', '%rax', '%rdx', '%r11']:
                     return True, 0
                 else:
-                    raise Exception("Unknown encoding here")
+                    raise Exception("Unknown encoding here:\n%s\nIn: \"%s\"" %
+                            (atom.line, context.function_name))
         elif atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'add' and atom.dst == '%rsp':
             # 48 83 e4 f0           and    $0xfffffffffffffff0,%rsp
             # This is smart GCC behavior:
