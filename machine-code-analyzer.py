@@ -933,10 +933,7 @@ class StackAnalyzer(Common):
 
         for i in range(3, 14):
             exp = 2 ** i
-            if (d[exp] != 0):
-                percent = self.percent(overall, d[exp])
-            else:
-                percent = 0.0
+            percent = self.percent(overall, d[exp])
             sys.stdout.write("%-5d %6d    (%5.1f%% )\n" % (exp, d[exp], percent))
         sys.stdout.write("\n")
 
