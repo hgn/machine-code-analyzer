@@ -931,11 +931,28 @@ class StackAnalyzer(Common):
                     d[exp] += 1
                     break
 
+        if self.opts.generate_graphs:
+            file_out_name = 'function-stack-histogram'
+            l = pygal.style.LightStyle
+            l.foreground='black'
+            l.background='white'
+            l.plot_background='white'
+            pie_chart = pygal.Pie(fill=True, style=l)
+            pie_chart.title = 'Stack Memory Allocation Histogram'
+
         for i in range(3, 14):
             exp = 2 ** i
             percent = self.percent(overall, d[exp])
             sys.stdout.write("%-5d %6d    (%5.1f%% )\n" % (exp, d[exp], percent))
+            if self.opts.generate_graphs:
+                pie_chart.add(str(exp), d[exp])
         sys.stdout.write("\n")
+
+        if self.opts.generate_graphs:
+            pie_chart.render_to_file('%s.svg' % (file_out_name))
+            sys.stderr.write("# created graph file:  %s.svg\n" % (file_out_name))
+            os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" % (file_out_name, file_out_name))
+            sys.stderr.write("# created graph file:  %s.png\n" % (file_out_name))
 
 
     def graph_with_vs_without(self, no_functions_with, no_functions_without):
