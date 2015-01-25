@@ -894,16 +894,24 @@ class StackAnalyzer(Common):
             # be encoded as an immediate (imm8) instruction and is thus
             # shorter as the sub 128 counterpart.
             if not atom.src.startswith('$'):
-                raise Exception("Unknown encoding here:\n%s\nIn: \"%s\""  %
-                        (atom.line, context.function_name))
-            val = int(atom.src[1:], 16)
-            if val > 0xf0000000:
-                s1 = ctypes.c_uint32(-val)
-                s1.value += ctypes.c_uint32(0x80000000).value
-                s1.value += ctypes.c_uint32(0x80000000).value
-                retobj = RetObj(RetObj.STATIC)
-                retobj.val = s1.value
-                return retobj
+                # 48 29 c4                add    %r11,%rsp
+                if atom.src in ['%rcx', '%rax', '%rdx', '%r8', '%rdi', '%r11']:
+                    retobj = RetObj(RetObj.DYNAMIC)
+                    retobj.val = 0
+                    retobj.register = atom.src
+                    return retobj
+                else:
+                    raise Exception("Unknown encoding here:\n%s\nIn: \"%s\"" %
+                            (atom.line, context.function_name))
+            else:
+                val = int(atom.src[1:], 16)
+                if val > 0xf0000000:
+                    s1 = ctypes.c_uint32(-val)
+                    s1.value += ctypes.c_uint32(0x80000000).value
+                    s1.value += ctypes.c_uint32(0x80000000).value
+                    retobj = RetObj(RetObj.STATIC)
+                    retobj.val = s1.value
+                    return retobj
 
         # default case for non stack related instructions
         return None
