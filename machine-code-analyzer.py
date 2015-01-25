@@ -860,7 +860,7 @@ class StackAnalyzer(Common):
         # if size is unknown 0 is returned, e.g. LSAs
         # LSAs are not covered here, e.g.
         # ffffffff8134a35a:       48 29 d4                sub    %rdx,%rsp
-        if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic in ['sub', 'add'] and atom.dst == '%rsp':
+        if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
             if atom.src.startswith('$'):
                 val = int(atom.src[1:], 16)
                 if val > 0xf0000000:
@@ -931,7 +931,6 @@ class StackAnalyzer(Common):
         func_db['stack-usage-no'] += 1
         label = 'stack-usage-%d' % (func_db['stack-usage-no'])
         func_db[label] = ret.val
-        print("cnt: %d" % (ret.val))
 
 
     def percent(self, i, j):
@@ -1025,9 +1024,6 @@ class StackAnalyzer(Common):
         sorted_data = []
         for function_name, value in self.db.items():
             cnt =  self.db[function_name]['stack-usage-no']
-            if cnt == 0:
-                sorted_data.append([function_name, 0, ""])
-                continue
             nested = ""
             for i in range(cnt - 1):
                 label = 'stack-usage-%d' % (i + 2)
