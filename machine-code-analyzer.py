@@ -618,6 +618,7 @@ class Parser:
 class FunctionAnatomyAnalyzer(Common):
 
     def __init__(self):
+        self.func_excluder = FunctionExcluder()
         self.parse_local_options()
         self.db = dict()
         self.len_longest_filename = 10
@@ -629,12 +630,19 @@ class FunctionAnatomyAnalyzer(Common):
         parser.usage = "InstructionAnalyzer"
         parser.add_option( "-v", "--verbose", dest="verbose", default=False,
                           action="store_true", help="show verbose")
+        parser.add_option( "-x", "--no-exclude", dest="no_exclude", default=False,
+                action="store_true", help="do *not* exclude some glibc/gcc helper"
+                "runtime functions like __init _start or _do_global_dtors_aux")
 
         self.opts, args = parser.parse_args(sys.argv[0:])
 
         if len(args) != 3:
             self.err("No <binary> argument given, exiting\n")
             sys.exit(1)
+
+        if self.opts.no_exclude:
+            # empty list means there will never be a match
+            self.func_excluder = None
 
         self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
         self.opts.filename = args[-1]
@@ -657,6 +665,8 @@ class FunctionAnatomyAnalyzer(Common):
         mnemonic_db['cnt'] += 1
 
     def process(self, context, atom):
+        if self.func_excluder and self.func_excluder.is_excluded(context.function_name):
+            return
         self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
         if not context.function_name in self.db:
             self.db[context.function_name] = dict()
