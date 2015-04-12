@@ -53,6 +53,25 @@ class NotImplementedException(InternalException): pass
 class SkipProcessStepException(Exception): pass
 class UnitException(Exception): pass
 
+
+class FunctionExcluder:
+
+    def __init__(self):
+        self.exclude_files = ['_start', '_fini', '__libc_csu_fini',
+                              '__do_global_dtors_aux', '__libc_csu_init',
+                              'register_tm_clones', 'frame_dummy',
+                              '__init', 'deregister_tm_clones', '_init']
+
+    def is_excluded(self, function_name):
+        if function_name.endswith("@plt"):
+            return True
+        if function_name.endswith("@plt-0x10"):
+            return True
+        if function_name in self.exclude_files:
+            return True
+        return False
+
+
 class RetObj:
 
     STATIC = 0
@@ -797,10 +816,7 @@ class InstructionAnalyzer(Common):
 class StackAnalyzer(Common):
 
     def __init__(self):
-        self.exclude_files = ['_start', '_fini', '__libc_csu_fini',
-                              '__do_global_dtors_aux', '__libc_csu_init',
-                              'register_tm_clones', 'frame_dummy',
-                              '__init', 'deregister_tm_clones', '_init']
+        self.func_excluder = FunctionExcluder()
         self.db = dict()
         self.all_function_db = dict()
         self.parse_local_options()
@@ -825,7 +841,7 @@ class StackAnalyzer(Common):
 
         if self.opts.no_exclude:
             # empty list means there will never be a match
-            self.exclude_files = []
+            self.func_excluder = None
 
         self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
         self.opts.filename = args[-1]
@@ -900,11 +916,7 @@ class StackAnalyzer(Common):
 
 
     def process(self, context, atom):
-        if context.function_name.endswith("@plt"):
-            return
-        if context.function_name.endswith("@plt-0x10"):
-            return
-        if context.function_name in self.exclude_files:
+        if self.func_excluder and self.func_excluder.is_excluded(context.function_name):
             return
         if context.function_name not in self.all_function_db:
             self.all_function_db[context.function_name] = True
