@@ -724,7 +724,7 @@ class FunctionAnatomyAnalyzer(Common):
                 similar_data[signature]['signature'] = signature
 
         for key in sorted(similar_data.items(), key=lambda item: item[1]['cnt'], reverse=True):
-            self.msg("%s %d\n" % (key[1]['signature'], key[1]['cnt']))
+            self.msg("%.20s %d\n" % (key[1]['signature'], key[1]['cnt']))
 
 
     def show_json(self):
