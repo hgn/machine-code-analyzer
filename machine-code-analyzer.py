@@ -709,8 +709,6 @@ class FunctionAnatomyAnalyzer(Common):
         # Function Mnemonic Signature Overview
         if self.opts.verbose:
             for key, value in self.db.items():
-                if key.endswith("@plt"):
-                    continue
                 self.msg("%s:\n" % (key))
                 for i in range(self.db[key]['mnemonic']['captured']):
                     self.msg("\t%d %s\n" % (i, self.db[key]['mnemonic'][i]))
