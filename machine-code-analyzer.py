@@ -976,8 +976,8 @@ class StackAnalyzer(Common):
             exp = 2 ** i
             percent = self.percent(overall, d[exp])
             sys.stdout.write("%-5d %6d    (%5.1f%% )\n" % (exp, d[exp], percent))
-            if self.opts.generate_graphs:
-                pie_chart.add(str(exp), d[exp])
+            if self.opts.generate_graphs and d[exp] > 0:
+                pie_chart.add("%s byte" % (str(exp)), d[exp])
         sys.stdout.write("\n")
 
         if self.opts.generate_graphs:
