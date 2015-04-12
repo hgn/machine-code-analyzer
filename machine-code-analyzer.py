@@ -627,25 +627,15 @@ class FunctionAnatomyAnalyzer(Common):
         self.show()
 
 
-    def process_function_pro_epilogue(self, context, atom, mnemonic_db):
-        if mnemonic_db['cnt'] < 10:
+    def process_function_pro_epi_logue(self, context, atom, mnemonic_db):
+        if mnemonic_db['cnt'] < 4:
             # we capture the first 10 instructions per functions
             mnemonic_db[mnemonic_db['cnt']] = atom.mnemonic
+            mnemonic_db['captured'] += 1
         # this will overwriten each time, at the end this entry will hold
         # the last mnemonic for the function
         mnemonic_db['-1'] = atom.mnemonic
         mnemonic_db['cnt'] += 1
-
-        # LSAs are not covered here, e.g.
-        # ffffffff8134a35a:       48 29 d4                sub    %rdx,%rsp
-        # We cannot simple make a guess here, so ignore this
-        if not mnemonic_db['stack-usage']:
-            if atom.type == BinaryAtom.TYPE_2 and atom.mnemonic == 'sub' and atom.dst == '%rsp':
-                if atom.src.startswith('$'):
-                    mnemonic_db['stack-usage'] = int(atom.src[1:], 16)
-                else:
-                    raise Exception("Unknown encoding here")
-
 
     def process(self, context, atom):
         self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
@@ -659,8 +649,8 @@ class FunctionAnatomyAnalyzer(Common):
                     self.db[context.function_name]['end'] - self.db[context.function_name]['start']
             self.db[context.function_name]['mnemonic'] = dict()
             self.db[context.function_name]['mnemonic']['cnt'] = 0
-            self.db[context.function_name]['mnemonic']['stack-usage'] = None
-            self.process_function_pro_epilogue(context, atom, self.db[context.function_name]['mnemonic'])
+            self.db[context.function_name]['mnemonic']['captured'] = 0
+            self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
             return
 
         self.db[context.function_name]['end'] += atom.opcode_len
@@ -668,7 +658,7 @@ class FunctionAnatomyAnalyzer(Common):
                 self.db[context.function_name]['end'] - self.db[context.function_name]['start']
         self.len_longest_size = max(len(str(self.db[context.function_name]['size'])), self.len_longest_size)
         # last mnemonic in function
-        self.process_function_pro_epilogue(context, atom, self.db[context.function_name]['mnemonic'])
+        self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
 
 
     def show(self, json=False):
@@ -688,21 +678,13 @@ class FunctionAnatomyAnalyzer(Common):
             self.msg(fmt % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
 
         # Function Mnemonic Signature Overview
-        for key, value in self.db.items():
-            if key.endswith("@plt"):
-                continue
-            self.msg("%s:\n" % (key))
-            self.msg("\t%s\n" % (self.db[key]['mnemonic'][0]))
-
-        # Stack Usage per Function
-        for key, value in self.db.items():
-            if key.endswith("@plt"):
-                continue
-            self.msg("%s:\n" % (key))
-            if not self.db[key]['mnemonic']['stack-usage']:
-                self.msg("no stack usage information\n")
-            else:
-                self.msg("\t%d byte\n" % (self.db[key]['mnemonic']['stack-usage']))
+        if self.opts.verbose:
+            for key, value in self.db.items():
+                if key.endswith("@plt"):
+                    continue
+                self.msg("%s:\n" % (key))
+                for i in range(self.db[key]['mnemonic']['captured']):
+                    self.msg("\t%d %s\n" % (i, self.db[key]['mnemonic'][i]))
 
 
     def show_json(self):
@@ -1061,7 +1043,7 @@ class MachineCodeAnalyzer:
     modes = {
        "function-anatomy":     [ "FunctionAnatomyAnalyzer", "Function anatomy information" ],
        "instruction-analyzer": [ "InstructionAnalyzer",     "Information about instructions" ],
-       "stack":                [ "StackAnalyzer", "Stack usage analyzer" ]
+       "stack":                [ "StackAnalyzer",           "Stack usage analyzer" ]
             }
 
 
