@@ -707,11 +707,24 @@ class FunctionAnatomyAnalyzer(Common):
             self.msg(fmt % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
 
         # Function Mnemonic Signature Overview
-        if self.opts.verbose:
-            for key, value in self.db.items():
-                self.msg("%s:\n" % (key))
-                for i in range(self.db[key]['mnemonic']['captured']):
-                    self.msg("\t%d %s\n" % (i, self.db[key]['mnemonic'][i]))
+        similar_data = dict()
+        for key, value in self.db.items():
+            self.msg("%s:\n" % (key))
+            signature = ""
+            seq = list()
+            for i in range(self.db[key]['mnemonic']['captured']):
+                self.msg("\t%d %s\n" % (i, self.db[key]['mnemonic'][i]))
+                signature += self.db[key]['mnemonic'][i]
+                seq.append(self.db[key]['mnemonic'][i])
+            if signature in similar_data:
+                similar_data[signature]['cnt'] += 1
+            else:
+                similar_data[signature] = dict()
+                similar_data[signature]['cnt'] = 1
+                similar_data[signature]['signature'] = signature
+
+        for key in sorted(similar_data.items(), key=lambda item: item[1]['cnt'], reverse=True):
+            self.msg("%s %d\n" % (key[1]['signature'], key[1]['cnt']))
 
 
     def show_json(self):
