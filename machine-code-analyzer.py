@@ -23,6 +23,7 @@ import subprocess
 import pprint
 import re
 import ctypes
+import math
 
 # Optional packages
 # Arch Linux:
@@ -692,10 +693,29 @@ class FunctionAnatomyAnalyzer(Common):
 
 
     def show(self, json=False):
-        if json:
-            self.show_json()
-        else:
-            self.show_human()
+        self.show_human()
+
+    def next_power_of_two(self, n):
+        return int(math.pow(2, math.ceil(math.log(n, 2))))
+
+    def show_function_size_histogram(self):
+        histogram = dict()
+        histogram[1] = 0 # just for the case
+        start = 2
+        while start <= self.next_power_of_two(self.largest_function):
+            histogram[start] = 0
+            start *= 2
+
+        for k,v in self.db.items():
+            power_size = self.next_power_of_two(v['size'])
+            histogram[power_size] += 1
+
+        start = 2
+        self.msg("\n\n\nFunctions Size Histogram:\n\n")
+        while start <= self.next_power_of_two(self.largest_function):
+            self.msg("%4d    %d\n" % (start, histogram[start]))
+            start *= 2
+
 
 
     def show_human(self):
@@ -706,6 +726,8 @@ class FunctionAnatomyAnalyzer(Common):
                 (self.len_longest_filename, self.len_longest_filename, self.len_longest_size)
         for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
             self.msg(fmt % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
+
+        self.show_function_size_histogram()
 
         # Function Mnemonic Signature Overview
         similar_data = dict()
@@ -727,7 +749,7 @@ class FunctionAnatomyAnalyzer(Common):
                 similar_data[signature]['seq'] = seq
                 similar_data[signature]['signature'] = signature
 
-        self.msg("\nFunctions Prologue Similarity:\n\n")
+        self.msg("\n\nFunctions Prologue Similarity:\n\n")
         self.msg("No Functions    Function Prologue\n")
         for key in sorted(similar_data.items(), key=lambda item: item[1]['cnt'], reverse=True):
             self.msg("%-4d            %s\n" % (key[1]['cnt'], key[1]['seq']))
