@@ -604,7 +604,7 @@ class Parser:
 
     def run(self, caller):
         self.caller = caller
-        self.caller.msg("Instruction and Opcode Analyzer - (C) 2014\n\n")
+        self.caller.msg("Instruction and Opcode Analyzer - (C) 2014,2015\n")
         self.caller.verbose("URL: https://github.com/hgn/instruction-layout-analyzer\n")
         self.caller.verbose("Binary to analyze: %s\n" % self.args.filename)
         statinfo = os.stat(self.args.filename)
@@ -674,8 +674,7 @@ class FunctionAnatomyAnalyzer(Common):
                     context.function_start_address
             self.db[context.function_name]['end'] = \
                     context.function_start_address + atom.opcode_len
-            self.db[context.function_name]['size'] = \
-                    self.db[context.function_name]['end'] - self.db[context.function_name]['start']
+            self.db[context.function_name]['size'] = atom.opcode_len
             self.db[context.function_name]['mnemonic'] = dict()
             self.db[context.function_name]['mnemonic']['cnt'] = 0
             self.db[context.function_name]['mnemonic']['captured'] = 0
@@ -683,8 +682,7 @@ class FunctionAnatomyAnalyzer(Common):
             return
 
         self.db[context.function_name]['end'] += atom.opcode_len
-        self.db[context.function_name]['size'] = \
-                self.db[context.function_name]['end'] - self.db[context.function_name]['start']
+        self.db[context.function_name]['size'] += atom.opcode_len
         self.len_longest_size = max(len(str(self.db[context.function_name]['size'])), self.len_longest_size)
         # last mnemonic in function
         self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
