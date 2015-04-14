@@ -448,6 +448,14 @@ class Common:
     def msg(self, msg):
         sys.stdout.write(msg)
 
+    def msg_underline(self, msg, pre_news=0, post_news=0):
+        str_len = len(msg)
+        if pre_news:
+            self.msg("\n" * pre_news)
+        self.msg(msg)
+        self.msg("\n" + '=' * str_len)
+        if post_news:
+            self.msg("\n" * post_news)
 
     def debug(self, msg):
         pass
@@ -698,6 +706,7 @@ class FunctionAnatomyAnalyzer(Common):
     def next_power_of_two(self, n):
         return int(math.pow(2, math.ceil(math.log(n, 2))))
 
+
     def show_function_size_histogram(self):
         histogram = dict()
         histogram[1] = 0 # just for the case
@@ -710,10 +719,12 @@ class FunctionAnatomyAnalyzer(Common):
             power_size = self.next_power_of_two(v['size'])
             histogram[power_size] += 1
 
+        overall = len(self.db)
         start = 2
-        self.msg("\n\n\nFunctions Size Histogram:\n\n")
+        self.msg_underline("Functions Size Histogram:", pre_news=3, post_news=3)
         while start <= self.next_power_of_two(self.largest_function):
-            self.msg("%4d    %d\n" % (start, histogram[start]))
+            percent = (float(histogram[start]) / (overall)) * 100.0
+            self.msg("%4d    %5d\t\t[ %5.2f%% ]\n" % (start, histogram[start], percent))
             start *= 2
 
 
