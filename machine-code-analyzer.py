@@ -623,6 +623,7 @@ class FunctionAnatomyAnalyzer(Common):
         self.db = dict()
         self.len_longest_filename = 10
         self.len_longest_size = 4
+        self.largest_function = 0
 
 
     def parse_local_options(self):
@@ -679,11 +680,13 @@ class FunctionAnatomyAnalyzer(Common):
             self.db[context.function_name]['mnemonic']['cnt'] = 0
             self.db[context.function_name]['mnemonic']['captured'] = 0
             self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
+            self.largest_function = max(self.db[context.function_name]['size'], self.largest_function)
             return
 
         self.db[context.function_name]['end'] += atom.opcode_len
         self.db[context.function_name]['size'] += atom.opcode_len
         self.len_longest_size = max(len(str(self.db[context.function_name]['size'])), self.len_longest_size)
+        self.largest_function = max(self.db[context.function_name]['size'], self.largest_function)
         # last mnemonic in function
         self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
 
