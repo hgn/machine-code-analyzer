@@ -643,6 +643,8 @@ class FunctionAnatomyAnalyzer(Common):
         parser.add_option( "-x", "--no-exclude", dest="no_exclude", default=False,
                 action="store_true", help="do *not* exclude some glibc/gcc helper"
                 "runtime functions like __init _start or _do_global_dtors_aux")
+        parser.add_option( "-g", "--graphs", dest="generate_graphs", default=False,
+                action="store_true", help="generate SVG graphs")
 
         self.opts, args = parser.parse_args(sys.argv[0:])
 
@@ -708,24 +710,43 @@ class FunctionAnatomyAnalyzer(Common):
 
 
     def show_function_size_histogram(self):
+
+        if self.opts.generate_graphs:
+            file_out_name = 'function-size-histogram'
+            l = pygal.style.LightStyle
+            l.foreground='black'
+            l.background='white'
+            l.plot_background='white'
+            pie_chart = pygal.Pie(fill=True, style=l)
+            pie_chart.title = 'Function Size Histogram'
+
         histogram = dict()
         histogram[1] = 0 # just for the case
-        start = 2
-        while start <= self.next_power_of_two(self.largest_function):
-            histogram[start] = 0
-            start *= 2
+        i = 2
+        while i <= self.next_power_of_two(self.largest_function):
+            histogram[i] = 0
+            i *= 2
 
         for k,v in self.db.items():
             power_size = self.next_power_of_two(v['size'])
             histogram[power_size] += 1
 
         overall = len(self.db)
-        start = 2
+        i = 2
         self.msg_underline("Functions Size Histogram:", pre_news=3, post_news=3)
-        while start <= self.next_power_of_two(self.largest_function):
-            percent = (float(histogram[start]) / (overall)) * 100.0
-            self.msg("%4d    %5d\t\t[ %5.2f%% ]\n" % (start, histogram[start], percent))
-            start *= 2
+        while i <= self.next_power_of_two(self.largest_function):
+            percent = (float(histogram[i]) / (overall)) * 100.0
+            self.msg("%4d    %5d\t\t[ %5.2f%% ]\n" % (i, histogram[i], percent))
+            if self.opts.generate_graphs and percent > 0.0:
+                pie_chart.add("%4d %4.1f%%" % (i, percent), histogram[i])
+            i *= 2
+
+        if self.opts.generate_graphs:
+            pie_chart.render_to_file('%s.svg' % (file_out_name))
+            sys.stderr.write("# created graph file:  %s.svg\n" % (file_out_name))
+            os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" %
+                    (file_out_name, file_out_name))
+            sys.stderr.write("# created graph file:  %s.png\n" % (file_out_name))
 
 
 
