@@ -732,28 +732,36 @@ class FunctionAnatomyAnalyzer(Common):
             histogram[power_size] += 1
 
         overall = len(self.db)
-        i = 2
-        self.msg_underline("Functions Size Histogram:", pre_news=3, post_news=3)
+        i = 2; remain = 0
+        self.msg_underline("Functions Size Histogram:", pre_news=2, post_news=2)
         while i <= self.next_power_of_two(self.largest_function):
             percent = (float(histogram[i]) / (overall)) * 100.0
-            self.msg("%4d    %5d\t\t[ %5.2f%% ]\n" % (i, histogram[i], percent))
-            if self.opts.generate_graphs and percent > 0.0:
+            self.msg("<= %4d byte:   %5d\t\t[ %5.2f%% ]\n" % (i, histogram[i], percent))
+            if self.opts.generate_graphs and percent >= 1.0:
+                # function buckets with less then 1 percent are not
+                # plotted by default. They are accounted in the "remain bucket"
                 pie_chart.add("%4d %4.1f%%" % (i, percent), histogram[i])
+            else:
+                remain += histogram[i]
             i *= 2
+
+        if self.opts.generate_graphs and remain > 0:
+            percent = (float(remain) / (overall)) * 100.0
+            pie_chart.add("%s %4.1f%%" % ("Remain", percent), histogram[i])
 
         if self.opts.generate_graphs:
             pie_chart.render_to_file('%s.svg' % (file_out_name))
-            sys.stderr.write("# created graph file:  %s.svg\n" % (file_out_name))
+            self.verbose("# created graph file:  %s.svg\n" % (file_out_name))
             os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" %
                     (file_out_name, file_out_name))
-            sys.stderr.write("# created graph file:  %s.png\n" % (file_out_name))
+            self.verbose("# created graph file:  %s.png\n" % (file_out_name))
 
 
 
     def show_human(self):
         # Some overall information about functions
         # Number of Functions, average len, min length, max length, etc
-        self.msg("Functions Size:\n\n")
+        self.msg_underline("Functions Size:", pre_news=1, post_news=2)
         fmt = "%%%d.%ds: %%%dd byte  [start: 0x%%x, end: 0x%%x]\n" % \
                 (self.len_longest_filename, self.len_longest_filename, self.len_longest_size)
         for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
@@ -781,7 +789,7 @@ class FunctionAnatomyAnalyzer(Common):
                 similar_data[signature]['seq'] = seq
                 similar_data[signature]['signature'] = signature
 
-        self.msg("\n\nFunctions Prologue Similarity:\n\n")
+        self.msg_underline("Functions Prologue Similarity:", pre_news=2, post_news=2)
         self.msg("No Functions    Function Prologue\n")
         for key in sorted(similar_data.items(), key=lambda item: item[1]['cnt'], reverse=True):
             self.msg("%-4d            %s\n" % (key[1]['cnt'], key[1]['seq']))
