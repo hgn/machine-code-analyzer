@@ -717,7 +717,10 @@ class FunctionAnatomyAnalyzer(Common):
             l.foreground='black'
             l.background='white'
             l.plot_background='white'
-            pie_chart = pygal.Pie(fill=True, style=l)
+            pie_chart = pygal.Pie(fill=True, style=l, truncate_legend=50,
+                                  legend_box_size=10,legend_font_size=14,
+                                  margin=0, title_font_size=20,
+                                  legend_at_bottom=False)
             pie_chart.title = 'Function Size Histogram'
 
         histogram = dict()
@@ -740,7 +743,7 @@ class FunctionAnatomyAnalyzer(Common):
             if self.opts.generate_graphs and percent >= 1.0:
                 # function buckets with less then 1 percent are not
                 # plotted by default. They are accounted in the "remain bucket"
-                pie_chart.add("%4d %4.1f%%" % (i, percent), histogram[i])
+                pie_chart.add("%d byte [ %4.1f%% ]" % (i, percent), histogram[i])
             else:
                 remain += histogram[i]
             i *= 2
