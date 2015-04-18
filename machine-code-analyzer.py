@@ -735,11 +735,11 @@ class FunctionAnatomyAnalyzer(Common):
             histogram[power_size] += 1
 
         overall = len(self.db)
-        i = 2; remain = 0
+        i = 2; remain = 0.0
         self.msg_underline("Functions Size Histogram:", pre_news=2, post_news=2)
         while i <= self.next_power_of_two(self.largest_function):
             percent = (float(histogram[i]) / (overall)) * 100.0
-            self.msg("<= %4d byte:   %5d\t\t[ %5.2f%% ]\n" % (i, histogram[i], percent))
+            self.msg("<= %6d byte:   %5d   [ %5.2f%% ]\n" % (i, histogram[i], percent))
             if self.opts.generate_graphs and percent >= 1.0:
                 # function buckets with less then 1 percent are not
                 # plotted by default. They are accounted in the "remain bucket"
@@ -749,8 +749,8 @@ class FunctionAnatomyAnalyzer(Common):
             i *= 2
 
         if self.opts.generate_graphs and remain > 0:
-            percent = (float(remain) / (overall)) * 100.0
-            pie_chart.add("%s %4.1f%%" % ("Remain", percent), histogram[i])
+            percent = (remain / (overall)) * 100.0
+            pie_chart.add("%s %4.1f%%" % ("Remain", percent), remain)
 
         if self.opts.generate_graphs:
             pie_chart.render_to_file('%s.svg' % (file_out_name))
@@ -795,7 +795,7 @@ class FunctionAnatomyAnalyzer(Common):
         self.msg_underline("Functions Prologue Similarity:", pre_news=2, post_news=2)
         self.msg("No Functions    Function Prologue\n")
         for key in sorted(similar_data.items(), key=lambda item: item[1]['cnt'], reverse=True):
-            self.msg("%-4d            %s\n" % (key[1]['cnt'], key[1]['seq']))
+            self.msg("%-6d          %s\n" % (key[1]['cnt'], key[1]['seq']))
 
 
     def show_json(self):
