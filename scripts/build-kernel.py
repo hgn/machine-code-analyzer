@@ -11,7 +11,7 @@ import tempfile
 import shutil
 import re
 
-KERNEL_VERSION = "v3.17"
+KERNEL_VERSION = "v4.0"
 
 KERNELDIR        = "%s/%s" % (os.getcwd(), "linux-src")
 KERNEL_SRC_DIR   = "%s/%s" % (KERNELDIR,   "src")
