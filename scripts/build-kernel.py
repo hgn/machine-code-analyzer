@@ -74,7 +74,7 @@ if not os.path.exists(KERNEL_BUILD_DIR):
     os.makedirs(KERNEL_BUILD_DIR)
 if not os.path.exists(KERNEL_SRC_DIR + "/.git"):
     print("No kernel found")
-    print("Path to git kernel source? (I will clone the repository)")
+    print("Path to git kernel source? (I will clone the repository!)")
     print("E.g.:")
     print("\tgit://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git")
     print("\tfile:///usr/src/linux")
@@ -92,6 +92,7 @@ os.chdir(KERNEL_SRC_DIR)
 
 cmd = "make O=%s allyesconfig" % (KERNEL_BUILD_DIR)
 print("Exectute: \"%s\"" % (cmd))
+print("This may take several minutes to some hours, depending on your CPU")
 os.system(cmd)
 
 disable_config("%s/.config" % (KERNEL_BUILD_DIR))
