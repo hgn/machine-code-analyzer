@@ -683,26 +683,27 @@ class FunctionAnalyzer(Common):
             self.func_excluded += 1
             return
         self.strlen_longest_funcname = max(len(context.function_name), self.strlen_longest_funcname)
-        if not context.function_name in self.db:
-            self.db[context.function_name] = dict()
-            self.db[context.function_name]['start'] = \
+        func_id = "%s:%s" % (context.function_name, context.function_start_address)
+        if not func_id in self.db:
+            self.db[func_id] = dict()
+            self.db[func_id]['start'] = \
                     context.function_start_address
-            self.db[context.function_name]['end'] = \
+            self.db[func_id]['end'] = \
                     context.function_start_address + atom.opcode_len
-            self.db[context.function_name]['size'] = atom.opcode_len
-            self.db[context.function_name]['mnemonic'] = dict()
-            self.db[context.function_name]['mnemonic']['cnt'] = 0
-            self.db[context.function_name]['mnemonic']['captured'] = 0
-            self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
-            self.biggest_function = max(self.db[context.function_name]['size'], self.biggest_function)
+            self.db[func_id]['size'] = atom.opcode_len
+            self.db[func_id]['mnemonic'] = dict()
+            self.db[func_id]['mnemonic']['cnt'] = 0
+            self.db[func_id]['mnemonic']['captured'] = 0
+            self.process_function_pro_epi_logue(context, atom, self.db[func_id]['mnemonic'])
+            self.biggest_function = max(self.db[func_id]['size'], self.biggest_function)
             return
 
-        self.db[context.function_name]['end'] += atom.opcode_len
-        self.db[context.function_name]['size'] += atom.opcode_len
-        self.strlen_largest_size = max(len(str(self.db[context.function_name]['size'])), self.strlen_largest_size)
-        self.biggest_function = max(self.db[context.function_name]['size'], self.biggest_function)
+        self.db[func_id]['end'] += atom.opcode_len
+        self.db[func_id]['size'] += atom.opcode_len
+        self.strlen_largest_size = max(len(str(self.db[func_id]['size'])), self.strlen_largest_size)
+        self.biggest_function = max(self.db[func_id]['size'], self.biggest_function)
         # last mnemonic in function
-        self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
+        self.process_function_pro_epi_logue(context, atom, self.db[func_id]['mnemonic'])
 
 
     def show(self, json=False):
@@ -788,7 +789,7 @@ class FunctionAnalyzer(Common):
         fmt = "%%%d.%ds: %%%dd byte  [start: 0x%%x, end: 0x%%x]\n" % \
                 (self.strlen_longest_funcname, self.strlen_longest_funcname, self.strlen_largest_size)
         for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
-            self.msg(fmt % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
+            self.msg(fmt % (key[0].split(':')[0], key[1]['size'], key[1]['start'], key[1]['end']))
 
         self.show_function_size_histogram()
 
@@ -796,7 +797,7 @@ class FunctionAnalyzer(Common):
         similar_data = dict()
         for key, value in self.db.items():
             if self.opts.verbose:
-                self.msg("%s:\n" % (key))
+                self.msg("%s:\n" % (key.split(':')[0]))
             signature = ""
             seq = list()
             for i in range(self.db[key]['mnemonic']['captured']):
