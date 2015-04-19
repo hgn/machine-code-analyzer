@@ -717,10 +717,10 @@ class FunctionAnalyzer(Common):
             l.foreground='black'
             l.background='white'
             l.plot_background='white'
-            pie_chart = pygal.Pie(fill=True, style=l, truncate_legend=50,
+            pie_chart = pygal.Bar(fill=True, style=l, truncate_legend=50,
                                   legend_box_size=10,legend_font_size=14,
-                                  margin=0, title_font_size=20,
-                                  legend_at_bottom=False)
+                                  margin=20, title_font_size=20,
+                                  legend_at_bottom=True)
             pie_chart.title = 'Function Size Histogram'
 
         histogram = dict()
@@ -750,7 +750,7 @@ class FunctionAnalyzer(Common):
 
         if self.opts.generate_graphs and remain > 0:
             percent = (remain / (overall)) * 100.0
-            pie_chart.add("%s %4.1f%%" % ("Remain", percent), remain)
+            pie_chart.add("%s [ %4.1f%% ]" % ("Remaining", percent), remain)
 
         if self.opts.generate_graphs:
             pie_chart.render_to_file('%s.svg' % (file_out_name))
