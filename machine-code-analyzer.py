@@ -603,7 +603,7 @@ class Parser:
             #    self.module['InstructionAnalyzer'].pass1(context, atom)
             # Function Anatomy Analyzer is always processed, because
             # the analyzer serves as a ground work for other analyzes
-            #self.module['FunctionAnatomyAnalyzer'].pass1(context, atom)
+            #self.module['FunctionAnalyzer'].pass1(context, atom)
             #if self.args.function_branch_jump:
             #    self.module['FunctionBranchJumpAnalyser'].pass1(context, atom)
             #atom.print()
@@ -624,7 +624,7 @@ class Parser:
 
 
 
-class FunctionAnatomyAnalyzer(Common):
+class FunctionAnalyzer(Common):
 
     def __init__(self):
         self.func_excluder = FunctionExcluder()
@@ -1145,9 +1145,9 @@ class StackAnalyzer(Common):
 class MachineCodeAnalyzer:
 
     modes = {
-       "function-anatomy":     [ "FunctionAnatomyAnalyzer", "Function anatomy information" ],
-       "instruction-analyzer": [ "InstructionAnalyzer",     "Information about instructions" ],
-       "stack":                [ "StackAnalyzer",           "Stack usage analyzer" ]
+       "function":    [ "FunctionAnalyzer",    "Function anatomy information" ],
+       "instruction": [ "InstructionAnalyzer", "Information about instructions" ],
+       "stack":       [ "StackAnalyzer",       "Stack usage analyzer" ]
             }
 
 
