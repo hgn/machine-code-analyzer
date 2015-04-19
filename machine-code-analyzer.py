@@ -676,6 +676,7 @@ class FunctionAnalyzer(Common):
         mnemonic_db['-1'] = atom.mnemonic
         mnemonic_db['cnt'] += 1
 
+
     def process(self, context, atom):
         if self.func_excluder and self.func_excluder.is_excluded(context.function_name):
             return
@@ -705,12 +706,12 @@ class FunctionAnalyzer(Common):
     def show(self, json=False):
         self.show_human()
 
+
     def next_power_of_two(self, n):
         return int(math.pow(2, math.ceil(math.log(n, 2))))
 
 
     def show_function_size_histogram(self):
-
         if self.opts.generate_graphs:
             file_out_name = 'function-size-histogram'
             l = pygal.style.LightStyle
@@ -736,7 +737,7 @@ class FunctionAnalyzer(Common):
 
         overall = len(self.db)
         i = 2; remain = 0.0
-        self.msg_underline("Functions Size Histogram:", pre_news=2, post_news=2)
+        self.msg_underline("Functions Size Histogram", pre_news=2, post_news=2)
         while i <= self.next_power_of_two(self.largest_function):
             percent = (float(histogram[i]) / (overall)) * 100.0
             self.msg("<= %6d byte:   %5d   [ %5.2f%% ]\n" % (i, histogram[i], percent))
@@ -760,11 +761,10 @@ class FunctionAnalyzer(Common):
             self.verbose("# created graph file:  %s.png\n" % (file_out_name))
 
 
-
     def show_human(self):
         # Some overall information about functions
         # Number of Functions, average len, min length, max length, etc
-        self.msg_underline("Functions Size:", pre_news=1, post_news=2)
+        self.msg_underline("Functions Size", pre_news=1, post_news=2)
         fmt = "%%%d.%ds: %%%dd byte  [start: 0x%%x, end: 0x%%x]\n" % \
                 (self.len_longest_filename, self.len_longest_filename, self.len_longest_size)
         for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
@@ -792,7 +792,7 @@ class FunctionAnalyzer(Common):
                 similar_data[signature]['seq'] = seq
                 similar_data[signature]['signature'] = signature
 
-        self.msg_underline("Functions Prologue Similarity:", pre_news=2, post_news=2)
+        self.msg_underline("Functions Prologue Similarity", pre_news=2, post_news=2)
         self.msg("No Functions    Function Prologue\n")
         for key in sorted(similar_data.items(), key=lambda item: item[1]['cnt'], reverse=True):
             self.msg("%-6d          %s\n" % (key[1]['cnt'], key[1]['seq']))
