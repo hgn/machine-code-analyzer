@@ -628,11 +628,12 @@ class FunctionAnalyzer(Common):
 
     def __init__(self):
         self.func_excluder = FunctionExcluder()
+        self.func_excluded = 0
         self.parse_local_options()
         self.db = dict()
-        self.len_longest_filename = 10
-        self.len_longest_size = 4
-        self.largest_function = 0
+        self.strlen_longest_funcname = 10
+        self.strlen_largest_size = 4
+        self.biggest_function = 0
 
 
     def parse_local_options(self):
@@ -679,8 +680,9 @@ class FunctionAnalyzer(Common):
 
     def process(self, context, atom):
         if self.func_excluder and self.func_excluder.is_excluded(context.function_name):
+            self.func_excluded += 1
             return
-        self.len_longest_filename = max(len(context.function_name), self.len_longest_filename)
+        self.strlen_longest_funcname = max(len(context.function_name), self.strlen_longest_funcname)
         if not context.function_name in self.db:
             self.db[context.function_name] = dict()
             self.db[context.function_name]['start'] = \
@@ -692,13 +694,13 @@ class FunctionAnalyzer(Common):
             self.db[context.function_name]['mnemonic']['cnt'] = 0
             self.db[context.function_name]['mnemonic']['captured'] = 0
             self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
-            self.largest_function = max(self.db[context.function_name]['size'], self.largest_function)
+            self.biggest_function = max(self.db[context.function_name]['size'], self.biggest_function)
             return
 
         self.db[context.function_name]['end'] += atom.opcode_len
         self.db[context.function_name]['size'] += atom.opcode_len
-        self.len_longest_size = max(len(str(self.db[context.function_name]['size'])), self.len_longest_size)
-        self.largest_function = max(self.db[context.function_name]['size'], self.largest_function)
+        self.strlen_largest_size = max(len(str(self.db[context.function_name]['size'])), self.strlen_largest_size)
+        self.biggest_function = max(self.db[context.function_name]['size'], self.biggest_function)
         # last mnemonic in function
         self.process_function_pro_epi_logue(context, atom, self.db[context.function_name]['mnemonic'])
 
@@ -727,7 +729,7 @@ class FunctionAnalyzer(Common):
         histogram = dict()
         histogram[1] = 0 # just for the case
         i = 2
-        while i <= self.next_power_of_two(self.largest_function):
+        while i <= self.next_power_of_two(self.biggest_function):
             histogram[i] = 0
             i *= 2
 
@@ -738,7 +740,7 @@ class FunctionAnalyzer(Common):
         overall = len(self.db)
         i = 2; remain = 0.0
         self.msg_underline("Functions Size Histogram", pre_news=2, post_news=2)
-        while i <= self.next_power_of_two(self.largest_function):
+        while i <= self.next_power_of_two(self.biggest_function):
             percent = (float(histogram[i]) / (overall)) * 100.0
             self.msg("<= %6d byte:   %5d   [ %5.2f%% ]\n" % (i, histogram[i], percent))
             if self.opts.generate_graphs and percent >= 1.0:
@@ -761,12 +763,30 @@ class FunctionAnalyzer(Common):
             self.verbose("# created graph file:  %s.png\n" % (file_out_name))
 
 
+    def show_common_information(self):
+        self.msg_underline("Common Information", pre_news=2, post_news=2)
+
+        smallest_function = sys.maxsize
+        for key, value in self.db.items():
+            smallest_function = min(value['size'], smallest_function)
+
+        functions_no = len(self.db)
+        self.msg("Number of analyzed functions: %d\n" % (functions_no))
+        if self.func_excluded > 0:
+            self.msg("Number of excluded functions: %d\n" % (self.func_excluded))
+        self.msg("Biggest function size: %d byte\n" % (self.biggest_function))
+        if smallest_function != sys.maxsize:
+            self.msg("Smallest function size: %d byte\n" % (smallest_function))
+
+
+
     def show_human(self):
         # Some overall information about functions
         # Number of Functions, average len, min length, max length, etc
+        self.show_common_information()
         self.msg_underline("Functions Size", pre_news=1, post_news=2)
         fmt = "%%%d.%ds: %%%dd byte  [start: 0x%%x, end: 0x%%x]\n" % \
-                (self.len_longest_filename, self.len_longest_filename, self.len_longest_size)
+                (self.strlen_longest_funcname, self.strlen_longest_funcname, self.strlen_largest_size)
         for key in sorted(self.db.items(), key=lambda item: item[1]['size'], reverse=True):
             self.msg(fmt % (key[0], key[1]['size'], key[1]['start'], key[1]['end']))
 
