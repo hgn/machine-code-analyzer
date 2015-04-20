@@ -728,7 +728,7 @@ class FunctionAnalyzer(Common):
         self.msg_underline("Function Duplicates", pre_news=2, post_news=2)
         tmp = dict()
         for k,v in self.db_duplicates.items():
-            #if len(v) <= 1: continue
+            if len(v) <= 1: continue
             if k not in tmp:
                 tmp[k] = 1
             else:
