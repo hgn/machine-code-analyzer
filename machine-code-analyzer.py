@@ -631,6 +631,7 @@ class FunctionAnalyzer(Common):
         self.func_excluded = 0
         self.parse_local_options()
         self.db = dict()
+        self.db_duplicates = dict()
         self.strlen_longest_funcname = 10
         self.strlen_largest_size = 4
         self.biggest_function = 0
@@ -678,10 +679,19 @@ class FunctionAnalyzer(Common):
         mnemonic_db['cnt'] += 1
 
 
+    def function_duplicate_check(self, context):
+        if not context.function_name in self.db_duplicates:
+            self.db_duplicates[context.function_name] = dict()
+            self.db_duplicates[context.function_name][context.function_start_address] = True
+            return
+        self.db_duplicates[context.function_name][context.function_start_address] = True
+
+
     def process(self, context, atom):
         if self.func_excluder and self.func_excluder.is_excluded(context.function_name):
             self.func_excluded += 1
             return
+        self.function_duplicate_check(context)
         self.strlen_longest_funcname = max(len(context.function_name), self.strlen_longest_funcname)
         func_id = "%s:%s" % (context.function_name, context.function_start_address)
         if not func_id in self.db:
