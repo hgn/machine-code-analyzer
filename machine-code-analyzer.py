@@ -724,6 +724,22 @@ class FunctionAnalyzer(Common):
         return int(math.pow(2, math.ceil(math.log(n, 2))))
 
 
+    def show_function_duplicates(self):
+        self.msg_underline("Function Duplicates", pre_news=2, post_news=2)
+        tmp = dict()
+        for k,v in self.db_duplicates.items():
+            #if len(v) <= 1: continue
+            if k not in tmp:
+                tmp[k] = 1
+            else:
+                tmp[k] += 1
+        fmt = "%%%d.%ds: %%3d duplicates\n" % \
+                (self.strlen_longest_funcname, self.strlen_longest_funcname)
+        for key in sorted(tmp.items(), key=lambda item: item[1], reverse=True):
+            self.msg(fmt % (key[0], key[1]))
+
+
+
     def show_function_size_histogram(self):
         if self.opts.generate_graphs:
             file_out_name = 'function-size-histogram'
@@ -822,6 +838,8 @@ class FunctionAnalyzer(Common):
                 similar_data[signature]['cnt'] = 1
                 similar_data[signature]['seq'] = seq
                 similar_data[signature]['signature'] = signature
+
+        self.show_function_duplicates()
 
         self.msg_underline("Functions Prologue Similarity", pre_news=2, post_news=2)
         self.msg("No Functions    Function Prologue\n")
