@@ -679,7 +679,7 @@ class FunctionAnalyzer(Common):
         mnemonic_db['cnt'] += 1
 
 
-    def function_duplicate_check(self, context):
+    def process_function_duplicate_check(self, context):
         if not context.function_name in self.db_duplicates:
             self.db_duplicates[context.function_name] = dict()
             self.db_duplicates[context.function_name][context.function_start_address] = True
@@ -691,7 +691,7 @@ class FunctionAnalyzer(Common):
         if self.func_excluder and self.func_excluder.is_excluded(context.function_name):
             self.func_excluded += 1
             return
-        self.function_duplicate_check(context)
+        self.process_function_duplicate_check(context)
         self.strlen_longest_funcname = max(len(context.function_name), self.strlen_longest_funcname)
         func_id = "%s:%s" % (context.function_name, context.function_start_address)
         if not func_id in self.db:
