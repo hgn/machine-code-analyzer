@@ -152,12 +152,13 @@ if not os.path.exists(KERNEL_SRC_DIR + "/.git"):
     cmd = "git clone %s %s" % (line, KERNEL_SRC_DIR)
     print("Exectute: \"%s\"" % (cmd))
     os.system(cmd)
-    cmd = "git --work-tree=%s checkout %s" % (KERNEL_SRC_DIR, KERNEL_VERSION)
-    print("Exectute: \"%s\"" % (cmd))
-    os.system(cmd)
 
 original_dir = os.getcwd()
 os.chdir(KERNEL_SRC_DIR)
+
+cmd = "git checkout %s" % (KERNEL_VERSION)
+print("Exectute: \"%s\"" % (cmd))
+os.system(cmd)
 
 cmd = "make O=%s allyesconfig" % (KERNEL_BUILD_DIR)
 print("Exectute: \"%s\"" % (cmd))
