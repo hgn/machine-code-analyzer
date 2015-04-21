@@ -100,7 +100,9 @@ def disable_config(config_file_path):
             "CONFIG_RING_BUFFER_STARTUP_TEST",
             "CONFIG_TRACE_ENUM_MAP_FILE",
             "CONFIG_KGDB",
-            "CONFIG_KASAN"
+            "CONFIG_KASAN",
+            "CONFIG_OPTIMIZE_INLINING",
+            "CONFIG_HAVE_ARCH_KMEMCHECK"
             ]
     #Create temp file
     fh, abs_path = tempfile.mkstemp()
