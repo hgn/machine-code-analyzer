@@ -725,18 +725,16 @@ class FunctionAnalyzer(Common):
 
 
     def show_function_duplicates(self):
-        self.msg_underline("Function Duplicates", pre_news=2, post_news=2)
-        tmp = dict()
-        for k,v in self.db_duplicates.items():
-            if len(v) <= 1: continue
-            if k not in tmp:
-                tmp[k] = 1
-            else:
-                tmp[k] += 1
+        printed_header = False
         fmt = "%%%d.%ds: %%3d duplicates\n" % \
                 (self.strlen_longest_funcname, self.strlen_longest_funcname)
-        for key in sorted(tmp.items(), key=lambda item: item[1], reverse=True):
-            self.msg(fmt % (key[0], key[1]))
+        for key in sorted(self.db_duplicates.items(), key=lambda item: len(item[1]), reverse=True):
+            if len(key[1]) <= 1:
+                break
+            if not printed_header:
+                self.msg_underline("Function Duplicates", pre_news=2, post_news=2)
+                printed_header = True
+            self.msg(fmt % (key[0], len(key[1])))
 
 
 
