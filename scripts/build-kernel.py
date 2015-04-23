@@ -107,7 +107,7 @@ def disable_config(config_file_path):
             "CONFIG_LOCK_STAT",
             "CONFIG_PROVE_LOCKING",
             "CONFIG_DEBUG_LOCK_ALLOC",
-            "CONFIG_CC_OPTIMIZE_FOR_SIZE",
+            "CONFIG_CC_OPTIMIZE_FOR_SIZE"
             ]
     #Create temp file
     fh, abs_path = tempfile.mkstemp()
