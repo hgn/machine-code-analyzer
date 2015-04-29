@@ -952,6 +952,44 @@ class InstructionAnalyzer(Common):
 
 
 
+class BranchAnalyzer(Common):
+
+    def __init__(self):
+        self.func_excluder = FunctionExcluder()
+        self.parse_local_options()
+
+
+    def parse_local_options(self):
+        parser = optparse.OptionParser()
+        parser.usage = "branch"
+        parser.add_option( "-x", "--no-exclude", dest="no_exclude", default=False,
+                action="store_true", help="do *not* exclude some glibc/gcc helper"
+                "runtime functions like __init _start or _do_global_dtors_aux")
+        parser.add_option( "-v", "--verbose", dest="verbose", default=False,
+                action="store_true", help="show verbose")
+        parser.add_option( "-g", "--graphs", dest="generate_graphs", default=False,
+                action="store_true", help="generate SVG graphs")
+
+        self.opts, args = parser.parse_args(sys.argv[0:])
+
+        if len(args) != 3:
+            self.err("No <binary> argument given, exiting\n")
+            sys.exit(1)
+
+        if self.opts.no_exclude:
+            # empty list means there will never be a match
+            self.func_excluder = None
+
+        self.verbose("Analyze binary: %s\n" % (sys.argv[-1]))
+        self.opts.filename = args[-1]
+
+
+    def run(self):
+        self.parser = Parser(self.opts)
+
+
+
+
 class StackAnalyzer(Common):
 
     def __init__(self):
@@ -1194,6 +1232,7 @@ class MachineCodeAnalyzer:
     modes = {
        "function":    [ "FunctionAnalyzer",    "Function anatomy information" ],
        "instruction": [ "InstructionAnalyzer", "Information about instructions" ],
+       "branch":      [ "BranchAnalyzer",      "Information about branches and jumps" ],
        "stack":       [ "StackAnalyzer",       "Stack usage analyzer" ]
             }
 
