@@ -121,9 +121,9 @@ class InstructionCategory:
     MMXEXT = 24
 
     DBn = {
-            """mov movl movb movslq cmove xchg bswap xadd push pushq pop in out""" :
+            """mov movl movb movslq movabs cmove xchg bswap xadd push pushq pop in out cmovne movzbl cmovge""" :
             [ DATA_TRANSFER , None ],
-            """add addl sub adc imul mul div inc neg cmp cmpl cmpq cmpb""" :
+            """add addl sub adc imul mul div inc neg cmp cmpl cmpq cmpb cmpl cmpq idivl dec""" :
             [ BINARY_ARITHMETIC , None ],
             """daa das aaa aas aam aad""" :
             [ DECIMAL_ARITHMETIC , None ],
@@ -134,7 +134,7 @@ class InstructionCategory:
             """test bt bts btr btc sete""" :
             [ BIT_BYTE , None ],
             """jmp je jbe jg jz ja jc jle js loop call callq retq jne jmpq
-            enter leave leaveq ret iret""" :
+            enter leave leaveq ret iret jl jns jge jae""" :
             [ CONTROL_TRANSFER , None ],
             """movs movsb rep repz""" :
             [ STRING , None ],
