@@ -121,9 +121,9 @@ class InstructionCategory:
     MMXEXT = 24
 
     DBn = {
-            """mov movl cmove xchg bswap xadd push pushq pop in out""" :
+            """mov movl movb movslq cmove xchg bswap xadd push pushq pop in out""" :
             [ DATA_TRANSFER , None ],
-            """add addl sub adc imul mul div inc neg cmp cmpl cmpq""" :
+            """add addl sub adc imul mul div inc neg cmp cmpl cmpq cmpb""" :
             [ BINARY_ARITHMETIC , None ],
             """daa das aaa aas aam aad""" :
             [ DECIMAL_ARITHMETIC , None ],
@@ -136,13 +136,13 @@ class InstructionCategory:
             """jmp je jbe jg jz ja jc jle js loop call callq retq jne jmpq
             enter leave leaveq ret iret""" :
             [ CONTROL_TRANSFER , None ],
-            """movs movsb rep""" :
+            """movs movsb rep repz""" :
             [ STRING , None ],
-            """stc clc sti cli pushf popf""" :
+            """stc clc sti cli pushf popf stos stosb stosw stosd""" :
             [ FLAG_CONTROL , None ],
             """lds les lgs""" :
             [ SEGMENT_REGISTER , None ],
-            """lea nop nopl ud2 xlat""" :
+            """lea nop nopl nopw ud2 xlat""" :
             [ MISC, None ],
             """cvttss2si""" :
             [ FLOATING_POINT, None ],
