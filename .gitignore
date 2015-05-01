@@ -27,3 +27,4 @@
 *.hex
 
 linux-src/
+analysis/
