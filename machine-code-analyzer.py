@@ -24,6 +24,7 @@ import pprint
 import re
 import ctypes
 import math
+import time
 
 # Optional packages
 # Arch Linux:
@@ -592,7 +593,10 @@ class Parser:
         context = Context()
 
         self.caller.verbose('pass one: \"%s\"\n' % (cmd))
+        start_time = time.process_time()
         p = subprocess.Popen(cmd.split(), shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        end_time = time.process_time()
+        self.caller.verbose("objdump took %.2f seconds\n" % (end_time - start_time))
         for line in p.stdout.readlines():
             atom = self.parse_line(line.decode("utf-8").strip(), context)
             if atom is None:
@@ -1247,7 +1251,6 @@ class MachineCodeAnalyzer:
             Colors.WARNING = ''
             Colors.FAIL = ''
             Colors.ENDC = ''
-
 
 
     def which(self, program):
