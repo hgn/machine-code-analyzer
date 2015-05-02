@@ -924,13 +924,6 @@ class InstructionAnalyzer(Common):
 
 
     def show(self, json=False):
-        if json:
-            self.show_json()
-        else:
-            self.show_human()
-
-
-    def show_human(self):
         self.msg("Program Instructions Analyses:\n\n")
 
         overall = 0
@@ -958,10 +951,6 @@ class InstructionAnalyzer(Common):
             percent = (float(k[1]['count']) / (overall)) * 100.0
             self.msg("%15.15s %10d [%5.2f]  %13.13s      %5.1f,%3.d,%3.d\n" %
                 (k[0], k[1]['count'], percent, InstructionCategory.str(k[1]['category']), sumval, minval, maxval))
-
-
-    def show_json(self):
-        pass
 
 
 
