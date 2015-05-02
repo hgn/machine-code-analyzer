@@ -447,7 +447,13 @@ class Common:
 
 
     def msg(self, msg):
-        sys.stdout.write(msg)
+        return sys.stdout.write(msg) - 1
+
+
+    def line(self, length, char='-'):
+        sys.stdout.write(char * length + "\n")
+
+
 
     def msg_underline(self, msg, pre_news=0, post_news=0):
         str_len = len(msg)
