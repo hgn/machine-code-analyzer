@@ -960,7 +960,7 @@ class InstructionAnalyzer(Common):
         for key in sorted(self.db_category.items(), key=lambda item: item[1], reverse=True):
             cat_name = InstructionCategory.str(key[0])
             percent = (float(key[1]) / (no_instructions)) * 100.0
-            self.msg("{:<20}  {:<4} [{:<4.4}%]\n".format(cat_name, key[1], percent))
+            self.msg("{:<20}  {:<4} [{:>6.2f} %]\n".format(cat_name, key[1], percent))
 
 
     def show(self, json=False):
