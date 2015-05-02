@@ -929,15 +929,9 @@ class InstructionAnalyzer(Common):
         self.process_category(atom)
 
 
-    def show(self, json=False):
-        self.msg("Program Instructions Analyses:\n\n")
-
-        overall = 0
-        for key, value in self.instructions.items():
-            overall += value['count']
-
+    def show_general(self, no_instructions):
         self.msg("General Information:\n")
-        self.msg("    Number Instructions: %d\n" % (overall))
+        self.msg("    Number Instructions: %d\n" % (no_instructions))
         self.msg("    Number different Instructions: %d\n" % (len(self.instructions.keys())))
         self.msg("    Overall Opcode length: %d byte\n" % (self.sum_opcode_length))
         self.msg("    Maximal Opcode length: %d byte\n" % (self.max_opcode_length))
@@ -954,9 +948,31 @@ class InstructionAnalyzer(Common):
             for key, value in k[1]['instruction-lengths'].items():
                 sumval += float(key) * float(value)
             sumval /= float(k[1]['count'])
-            percent = (float(k[1]['count']) / (overall)) * 100.0
+            percent = (float(k[1]['count']) / (no_instructions)) * 100.0
             self.msg("%15.15s %10d [%5.2f]  %13.13s      %5.1f,%3.d,%3.d\n" %
                 (k[0], k[1]['count'], percent, InstructionCategory.str(k[1]['category']), sumval, minval, maxval))
+
+
+    def show_categories(self, no_instructions):
+        self.msg_underline("Instruction Category", pre_news=2, post_news=3)
+        ret = self.msg("{:<20}| {:<10}\n".format("Category", "Number of Instructions"))
+        self.line(ret)
+        for key in sorted(self.db_category.items(), key=lambda item: item[1], reverse=True):
+            cat_name = InstructionCategory.str(key[0])
+            percent = (float(key[1]) / (no_instructions)) * 100.0
+            self.msg("{:<20}  {:<4} [{:<4.4}%]\n".format(cat_name, key[1], percent))
+
+
+    def show(self, json=False):
+        overall = 0
+        for key, value in self.instructions.items():
+            overall += value['count']
+
+        self.msg("Program Instructions Analyses:\n\n")
+
+        self.show_general(overall)
+        self.show_categories(overall)
+
 
 
 
