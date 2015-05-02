@@ -937,7 +937,7 @@ class InstructionAnalyzer(Common):
         self.msg("    Maximal Opcode length: %d byte\n" % (self.max_opcode_length))
         self.msg("\n")
 
-        self.msg("Detailed Analysis:\n")
+        self.msg_underline("Detailed Analysis", pre_news=2, post_news=3)
 
         self.msg("  Instruction  |  Count    [    %]  |    Category  | Length (avg, min, max)\n")
         self.msg("--------------------------------------------------------------------\n")
