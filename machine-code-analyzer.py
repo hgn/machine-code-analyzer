@@ -861,6 +861,7 @@ class InstructionAnalyzer(Common):
         self.instructions = dict()
         self.sum_opcode_length = 0
         self.max_opcode_length = 0
+        self.db_category = dict()
 
 
     def parse_local_options(self):
@@ -902,7 +903,14 @@ class InstructionAnalyzer(Common):
         # projects with millions of instructions
         self.instructions[atom.mnemonic]['instruction-lengths'] = dict()
         self.instructions[atom.mnemonic]['instruction-lengths'][atom.opcode_len] = 1
-        self.instructions[atom.mnemonic]['line'] = atom.line
+
+
+    def process_category(self, atom):
+        cat = InstructionCategory.guess(atom.mnemonic)
+        if cat in self.db_category:
+            self.db_category[cat] += 1
+        else:
+            self.db_category[cat] = 1
 
 
     def process(self, context, atom):
@@ -912,6 +920,7 @@ class InstructionAnalyzer(Common):
             self.add_existing(atom)
         else:
             self.add_new(atom)
+        self.process_category(atom)
 
 
     def show(self, json=False):
