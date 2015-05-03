@@ -122,18 +122,19 @@ class InstructionCategory:
 
     DBn = {
             """mov movl movb movslq movabs cmove xchg bswap xadd push pushq
-            pop in out cmovne movzbl cmovge movzwl""" :
+            pop in out cmovne movzbl cmovle cmovge movzwl movsbl cmova cmovbe cmovg
+            movsq movswl cmovs cmovle""" :
             [ DATA_TRANSFER , None ],
             """add addl sub adc imul mul div inc neg cmp cmpl cmpq cmpb cmpl
-            cmpq idivl dec sbb""" :
+            cmpq cmpw idivl dec sbb addq subl addw idiv cmpsb""" :
             [ BINARY_ARITHMETIC , None ],
             """daa das aaa aas aam aad""" :
             [ DECIMAL_ARITHMETIC , None ],
-            """and or not xor""" :
+            """and or orb orl not xor andb andl""" :
             [ LOGICAL , None ],
-            """sar shr sal shl rol rcr rcl shrd shld""" :
+            """sar shr sal shl rol rcr rcl shrd shld ror""" :
             [ SHIFT_ROTATE , None ],
-            """test bt bts btr btc sete testb cltq setne""" :
+            """test bt bts btr btc sete testb cltq setne btsl cltd""" :
             [ BIT_BYTE , None ],
             """jmp je jbe jg jz ja jc jle js loop call callq retq jne jmpq
             enter leave leaveq ret iret jl jns jge jae jb""" :
@@ -144,7 +145,7 @@ class InstructionCategory:
             [ FLAG_CONTROL , None ],
             """lds les lgs""" :
             [ SEGMENT_REGISTER , None ],
-            """lea nop nopl nopw ud2 xlat""" :
+            """lea nop nopl nopw ud2 xlat sfence""" :
             [ MISC, None ],
             """cvttss2si""" :
             [ FLOATING_POINT, None ],
