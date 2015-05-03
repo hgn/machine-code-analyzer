@@ -973,14 +973,21 @@ class InstructionAnalyzer(Common):
         self.msg_underline("Instruction Category", pre_news=2, post_news=3)
         ret = self.msg("{:<20}| {:<10}\n".format("Category", "Number of Instructions"))
         self.line(ret)
+        remain = 0
         for key in sorted(self.db_category.items(), key=lambda item: item[1], reverse=True):
             cat_name = InstructionCategory.str(key[0])
             percent = (float(key[1]) / (no_instructions)) * 100.0
             self.msg("{:<20}  {:<4} [{:>6.2f} %]\n".format(cat_name, key[1], percent))
             if self.opts.generate_graphs:
-                pie_chart.add("%s [ %4.1f%% ]" % (cat_name, percent), key[1])
+                if percent > 1.0:
+                    pie_chart.add("%s [ %4.1f%% ]" % (cat_name, percent), key[1])
+                else:
+                    remain += key[1]
 
         if self.opts.generate_graphs:
+            if remain > 0:
+                percent = (float(remain) / (no_instructions)) * 100.0
+                pie_chart.add("%s [ %4.1f%% ]" % ("Remaining", percent), remain)
             pie_chart.render_to_file('%s.svg' % (file_out_name))
             self.verbose("# created graph file:  %s.svg\n" % (file_out_name))
             os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" %
