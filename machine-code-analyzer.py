@@ -875,6 +875,8 @@ class InstructionAnalyzer(Common):
         parser.usage = "InstructionAnalyzer"
         parser.add_option( "-v", "--verbose", dest="verbose", default=False,
                           action="store_true", help="show verbose")
+        parser.add_option( "-g", "--graphs", dest="generate_graphs", default=False,
+                action="store_true", help="generate SVG graphs")
 
         self.opts, args = parser.parse_args(sys.argv[0:])
 
@@ -954,6 +956,18 @@ class InstructionAnalyzer(Common):
 
 
     def show_categories(self, no_instructions):
+        if self.opts.generate_graphs:
+            file_out_name = 'instruction-category-histogram'
+            l = pygal.style.LightStyle
+            l.foreground='black'
+            l.background='white'
+            l.plot_background='white'
+            pie_chart = pygal.Bar(fill=True, width=1500, height=800, style=l, truncate_legend=30,
+                                  legend_box_size=10,legend_font_size=14,
+                                  margin=10, title_font_size=20,
+                                  legend_at_bottom=True)
+            pie_chart.title = 'Instruction Category'
+
         self.msg_underline("Instruction Category", pre_news=2, post_news=3)
         ret = self.msg("{:<20}| {:<10}\n".format("Category", "Number of Instructions"))
         self.line(ret)
@@ -961,6 +975,15 @@ class InstructionAnalyzer(Common):
             cat_name = InstructionCategory.str(key[0])
             percent = (float(key[1]) / (no_instructions)) * 100.0
             self.msg("{:<20}  {:<4} [{:>6.2f} %]\n".format(cat_name, key[1], percent))
+            if self.opts.generate_graphs:
+                pie_chart.add("%s [ %4.1f%% ]" % (cat_name, percent), key[1])
+
+        if self.opts.generate_graphs:
+            pie_chart.render_to_file('%s.svg' % (file_out_name))
+            self.verbose("# created graph file:  %s.svg\n" % (file_out_name))
+            os.system("inkscape --export-png=%s.png %s.svg 1>/dev/null 2>&1" %
+                    (file_out_name, file_out_name))
+            self.verbose("# created graph file:  %s.png\n" % (file_out_name))
 
 
     def show(self, json=False):
