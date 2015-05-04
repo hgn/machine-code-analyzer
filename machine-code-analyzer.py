@@ -36,6 +36,7 @@ import time
 try:
     import pygal
 except ImportError:
+    sys.stderr.write("Pygal is not installed! Graph creation will not work\n")
     pygal = None
 
 
