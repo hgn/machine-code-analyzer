@@ -472,7 +472,9 @@ class Common:
             self.msg("\n" * post_news)
 
     def debug(self, msg):
-        pass
+        # remove next line for debuging purpose
+        return
+        sys.stderr.write(msg)
 
 
 
