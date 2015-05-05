@@ -29,6 +29,7 @@ def sizeof_fmt(num, suffix='B'):
 
 def disable_config(config_file_path):
     options = [
+            "CONFIG_DEBUG_KERNEL",
             "CONFIG_FTRACE",
             "CONFIG_TRACING_SUPPORT",
             "HAVE_FTRACE_MCOUNT_RECORD",
@@ -46,14 +47,6 @@ def disable_config(config_file_path):
             "CONFIG_DEBUG_CREDENTIALS",
             "CONFIG_RCU_TRACE",
             "CONFIG_RCU_TORTURE_TEST",
-            "CONFIG_HAVE_FUNCTION_TRACER",
-            "CONFIG_HAVE_FUNCTION_GRAPH_TRACER",
-            "CONFIG_HAVE_DYNAMIC_FTRACE",
-            "CONFIG_HAVE_DYNAMIC_FTRACE_WITH_REGS",
-            "CONFIG_HAVE_FTRACE_MCOUNT_RECORD",
-            "CONFIG_HAVE_SYSCALL_TRACEPOINTS",
-            "CONFIG_HAVE_FENTRY",
-            "CONFIG_HAVE_C_RECORDMCOUNT",
             "CONFIG_TRACE_CLOCK",
             "CONFIG_STACKTRACE_SUPPORT",
             "CONFIG_FUNCTION_TRACER",
@@ -106,7 +99,6 @@ def disable_config(config_file_path):
             "CONFIG_DEBUG_MUTEXES",
             "CONFIG_LOCK_STAT",
             "CONFIG_PROVE_LOCKING",
-            "CONFIG_DEBUG_LOCK_ALLOC",
             "CONFIG_CC_OPTIMIZE_FOR_SIZE",
             "CONFIG_IRQ_DOMAIN_DEBUG",
             "CONFIG_CGROUP_DEBUG",
@@ -142,7 +134,6 @@ def disable_config(config_file_path):
             "CONFIG_SAMPLE_HW_BREAKPOINT",
             "CONFIG_SAMPLE_KFIFO",
             "CONFIG_SAMPLE_KDB",
-            "CONFIG_HAVE_ARCH_KGDB",
             "CONFIG_KGDB_SERIAL_CONSOLE",
             "CONFIG_KGDB_TESTS",
             "CONFIG_KGDB_TESTS_ON_BOOT",
@@ -155,9 +146,10 @@ def disable_config(config_file_path):
             "CONFIG_IOMMU_DEBUG",
             "CONFIG_IOMMU_STRESS",
             "CONFIG_IOMMU_LEAK",
-            "CONFIG_HAVE_MMIOTRACE_SUPPORT",
             "CONFIG_DEBUG_BOOT_PARAMS",
             "CONFIG_CPA_DEBUG",
+            "CONFIG_LOCKUP_DETECTOR",
+            "CONFIG_DEBUG_KMEMLEAK"
             ]
     #Create temp file
     fh, abs_path = tempfile.mkstemp()
