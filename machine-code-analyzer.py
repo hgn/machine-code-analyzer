@@ -123,30 +123,33 @@ class InstructionCategory:
 
     DBn = {
             """mov movl movb movslq movabs cmove xchg bswap xadd push pushq
-            pop in out cmovne movzbl cmovle cmovge movzwl movsbl cmova cmovbe cmovg
-            movsq movswl cmovs cmovle""" :
+            pop in out cmovne movzbl cmovle cmovge movzwl movsbl cmova cmovbe
+            cmovg movsq movswl cmovs cmovle cmovb cmovae cmpxchg cmovns
+            movw cmovl movsbq movsl movsbw""" :
             [ DATA_TRANSFER , None ],
-            """add addl sub adc imul mul div inc neg cmp cmpl cmpq cmpb cmpl
-            cmpq cmpw idivl dec sbb addq subl addw idiv cmpsb""" :
+            """add addl sub adc imul mul div setle inc neg cmp cmpl cmpq cmpb cmpl
+            cmpq cmpw idivl dec sbb addq subl addw idiv cmpsb incl decl incq
+            divl subq subw subb mull divq""" :
             [ BINARY_ARITHMETIC , None ],
             """daa das aaa aas aam aad""" :
             [ DECIMAL_ARITHMETIC , None ],
-            """and or orb orl not xor andb andl""" :
+            """and or orb orl not xor andb andl orq orw andq andw""" :
             [ LOGICAL , None ],
             """sar shr sal shl rol rcr rcl shrd shld ror""" :
             [ SHIFT_ROTATE , None ],
-            """test bt bts btr btc sete testb cltq setne btsl cltd""" :
+            """test bt bts btr btc sete testb cltq setne btsl cltd btrw btrl
+            testl seta bsr setbe testq""" :
             [ BIT_BYTE , None ],
             """jmp je jbe jg jz ja jc jle js loop call callq retq jne jmpq
             enter leave leaveq ret iret jl jns jge jae jb""" :
             [ CONTROL_TRANSFER , None ],
             """movs movsb rep repz""" :
             [ STRING , None ],
-            """stc clc sti cli pushf popf stos stosb stosw stosd""" :
+            """stc clc sti cli pushf popf stos stosb stosw stosd clac stac""" :
             [ FLAG_CONTROL , None ],
             """lds les lgs""" :
             [ SEGMENT_REGISTER , None ],
-            """lea nop nopl nopw ud2 xlat sfence""" :
+            """lea nop nopl nopw ud2 xlat sfence mfence lfence""" :
             [ MISC, None ],
             """cvttss2si""" :
             [ FLOATING_POINT, None ],
