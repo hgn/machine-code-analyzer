@@ -832,7 +832,8 @@ class FunctionAnalyzer(Common):
 
     def show_function_alignment_info(self):
         addr_list = [ 128, 64, 32, 16, 8, 4, 2, 0]
-        self.msg_underline("Function Alignment Info", pre_news=2, post_news=1)
+        no_functions = 0
+        self.msg_underline("Function Alignment Info", pre_news=2, post_news=2)
         msg = "{:<11} {:>}\n".format("Alignment", 'No Functions [Percent]')
         self.msg(msg)
         db = dict()
@@ -842,9 +843,11 @@ class FunctionAnalyzer(Common):
 
         for key, value in self.db.items():
             db[self.determine_addr_alignment(addr_list, value['start'])]['functions'].append(key.split(':')[0])
+            no_functions += 1
 
         for addr_entry in addr_list:
-            msg = "{:>8}:   {:<}\n".format(addr_entry, len(db[addr_entry]['functions']))
+            percent = (float(len(db[addr_entry]['functions'])) / (no_functions))
+            msg = "{:>8}:   {:<}  [ {:>6.2%} ]\n".format(addr_entry, len(db[addr_entry]['functions']), percent)
             self.msg(msg)
 
 
