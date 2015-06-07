@@ -823,6 +823,30 @@ class FunctionAnalyzer(Common):
             self.msg("Smallest function size: %d byte\n" % (smallest_function))
 
 
+    def determine_addr_alignment(self, addr_list, address):
+        for addr_entry in addr_list:
+            if address % addr_entry == 0:
+                return addr_entry
+        return 0
+
+
+    def show_function_alignment_info(self):
+        addr_list = [ 128, 64, 32, 16, 8, 4, 2, 0]
+        self.msg_underline("Function Alignment Info", pre_news=2, post_news=1)
+        msg = "{:<11} {:>}\n".format("Alignment", 'No Functions [Percent]')
+        self.msg(msg)
+        db = dict()
+        for addr_entry in addr_list:
+            db[addr_entry] = dict()
+            db[addr_entry]['functions'] = list()
+
+        for key, value in self.db.items():
+            db[self.determine_addr_alignment(addr_list, value['start'])]['functions'].append(key.split(':')[0])
+
+        for addr_entry in addr_list:
+            msg = "{:>8}:   {:<}\n".format(addr_entry, len(db[addr_entry]['functions']))
+            self.msg(msg)
+
 
     def show_human(self):
         # Some overall information about functions
@@ -862,6 +886,8 @@ class FunctionAnalyzer(Common):
         self.msg("No Functions    Function Prologue\n")
         for key in sorted(similar_data.items(), key=lambda item: item[1]['cnt'], reverse=True):
             self.msg("%-6d          %s\n" % (key[1]['cnt'], key[1]['seq']))
+
+        self.show_function_alignment_info()
 
 
     def show_json(self):
