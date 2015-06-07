@@ -825,9 +825,10 @@ class FunctionAnalyzer(Common):
 
     def determine_addr_alignment(self, addr_list, address):
         for addr_entry in addr_list:
+            if addr_entry == 0:
+                return 0
             if address % addr_entry == 0:
                 return addr_entry
-        return 0
 
 
     def show_function_alignment_info(self):
