@@ -89,3 +89,11 @@ to relax CPU prefetcher and subsequent CPU logic.
 # JSON to Chart.js Converter #
 
 To generate charts a helper script comes bundled with instruction-layout-analyzer.
+
+# ToDo #
+
+## Function Gap Analysis ##
+
+Size in bytes from function end to next function start. Function alignment
+characteristics and the resulting effect of "wasted" memory is of interest.
+Especially for small and tiny functions
