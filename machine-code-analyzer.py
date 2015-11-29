@@ -404,7 +404,7 @@ class BinaryAtom:
         self.line       = line
         self.addr       = addr
         self.opcode_str = opcode
-        self.opcode_len = len(opcode.replace(" ", "")) / 2
+        self.opcode_len = len(opcode.replace(" ", "")) // 2
         self.type  = b_type
         self.category   = InstructionCategory.UNKNOWN
 
